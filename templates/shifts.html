@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% set page_title = "Vardiyalar" %}
+{% set page_subtitle = "Kapanmış ve açık vardiya icmalleri" %}
+{% block content %}
+<div class="panel">
+  {% if shifts %}
+  <table>
+    <thead>
+      <tr>
+        <th>Tarih</th>
+        <th>Vardiya</th>
+        <th>İstasyon</th>
+        <th>Kaynak</th>
+        <th>Durum</th>
+        <th>Satış</th>
+        <th>Litre</th>
+        <th>Tutar</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in shifts %}
+      <tr>
+        <td>{{ item.shift_date }}</td>
+        <td>V{{ item.shift_no }}</td>
+        <td>{{ item.station_name }}</td>
+        <td>{{ item.brand }}</td>
+        <td><span class="tag {{ item.status }}">{{ 'Açık' if item.status == 'open' else 'Kapalı' }}</span></td>
+        <td>{{ item.count }}</td>
+        <td>{{ item.total_volume | liter }}</td>
+        <td>{{ item.total_amount | money }} ₺</td>
+        <td><a class="link" href="/vardiya/{{ item.id }}">Rapor</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p>Gösterilecek vardiya yok.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

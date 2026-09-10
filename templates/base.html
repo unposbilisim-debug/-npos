@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ product }}{% if page_title %} — {{ page_title }}{% endif %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="icon" href="/static/img/logo.svg">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/">
+      <img src="/static/img/logo.svg" alt="">
+      <div>
+        <strong>ünpos</strong>
+        <span>Vardiya takip</span>
+      </div>
+    </a>
+    <nav>
+      <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Özet</a>
+      <a href="/vardiyalar" class="{% if request.url.path.startswith('/vardiya') %}active{% endif %}">Vardiyalar</a>
+      <a href="/ayarlar" class="{% if request.url.path == '/ayarlar' %}active{% endif %}">Ayarlar</a>
+    </nav>
+    <div class="side-status">
+      <div class="pill {% if watcher.running %}ok{% endif %}">
+        {% if watcher.running %}İzleme açık{% else %}İzleme kapalı{% endif %}
+      </div>
+      <p>{{ watcher.watch_path or 'Klasör seçilmedi' }}</p>
+      <small>Son tarama: {{ watcher.last_scan or '—' }}</small>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1>{{ page_title or product }}</h1>
+        <p>{{ page_subtitle or config.station_name }}</p>
+      </div>
+      <div class="top-actions">
+        {% block actions %}{% endblock %}
+      </div>
+    </header>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
