@@ -24,21 +24,21 @@ $js = asset('assets/js/admin.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>?v=12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=12">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=16">
 </head>
-<body>
+<body class="admin">
   <header class="head">
-    <div class="head-inner" style="grid-template-columns:1fr auto">
+    <div class="head-inner admin-head-inner">
       <a class="logo" href="<?= htmlspecialchars($home) ?>">
         <img class="logo-img" src="<?= htmlspecialchars(asset('assets/img/logo-ens.png')) ?>?v=12" alt="ENS Oto Market">
-        <span class="logo-mark"><strong>ENS OTO MARKET</strong><em>Yılmaz Elektronik iştirakidir</em></span>
+        <span class="logo-mark"><strong>ENS OTO MARKET</strong><em>Yönetim</em></span>
       </a>
       <div class="head-actions">
-        <button class="icon-btn" onclick="go('siparis')">Sipariş</button>
-        <button class="icon-btn" onclick="go('ekle')">Ürün ekle</button>
-        <button class="icon-btn" onclick="go('urunler')">Ürünler</button>
-        <button class="icon-btn" onclick="go('bayiler')">Bayiler</button>
-        <button class="icon-btn" id="logout">Çıkış</button>
+        <button class="icon-btn admin-desk-only" type="button" onclick="go('siparis')">Sipariş</button>
+        <button class="icon-btn admin-desk-only" type="button" onclick="go('ekle')">Ürün ekle</button>
+        <button class="icon-btn admin-desk-only" type="button" onclick="go('urunler')">Ürünler</button>
+        <button class="icon-btn admin-desk-only" type="button" onclick="go('bayiler')">Bayiler</button>
+        <button class="icon-btn" type="button" id="logout">Çıkış</button>
       </div>
     </div>
   </header>
@@ -56,6 +56,6 @@ $js = asset('assets/js/admin.js');
       api: <?= json_encode($api) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=4"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=6"></script>
 </body>
 </html>

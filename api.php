@@ -27,6 +27,8 @@ try {
         'order_status' => action_order_status(),
         'dealers' => action_dealers(),
         'dealer_save' => action_dealer_save(),
+        'dealer_orders' => action_dealer_orders(),
+        'category_save' => action_category_save(),
         default => json_out(['ok' => false, 'error' => 'Bilinmeyen istek.'], 404),
     };
 } catch (Throwable $e) {
@@ -279,6 +281,7 @@ function map_order(array $o, array $items): array
         'total' => (int) $o['total'],
         'total_text' => money_try((int) $o['total']),
         'created_at' => $o['created_at'],
+        'dealer_id' => (int) ($o['dealer_id'] ?? 0),
         'dealer_name' => $o['dealer_name'] ?? '',
         'dealer_company' => $o['dealer_company'] ?? '',
         'dealer_phone' => $o['dealer_phone'] ?? '',
@@ -384,8 +387,72 @@ function action_dealer_save(): void
         if (strlen($pass) < 6) {
             json_out(['ok' => false, 'error' => 'Yeni bayi için şifre yazın.'], 400);
         }
+        $exists = db()->prepare('SELECT id FROM users WHERE phone = ? OR phone LIKE ?');
+        $exists->execute([$phone, '%' . substr($phone, -10)]);
+        if ($exists->fetch()) {
+            json_out(['ok' => false, 'error' => 'Bu telefon zaten kayıtlı.'], 400);
+        }
         db()->prepare('INSERT INTO users (role,name,company,phone,password_hash,city,active,created_at) VALUES ("dealer",?,?,?,?,?,?,?)')
             ->execute([$name, $company, $phone, password_hash($pass, PASSWORD_DEFAULT), $city, $active, date('c')]);
     }
     json_out(['ok' => true]);
+}
+
+function action_dealer_orders(): void
+{
+    require_user('admin');
+    $id = (int) ($_GET['id'] ?? 0);
+    $st = db()->prepare("SELECT id, name, company, phone, city, active, created_at FROM users WHERE id = ? AND role = 'dealer'");
+    $st->execute([$id]);
+    $dealer = $st->fetch();
+    if (!$dealer) {
+        json_out(['ok' => false, 'error' => 'Bayi bulunamadı.'], 404);
+    }
+    $ost = db()->prepare('SELECT o.*, u.name AS dealer_name, u.company AS dealer_company, u.phone AS dealer_phone FROM orders o JOIN users u ON u.id = o.dealer_id WHERE o.dealer_id = ? ORDER BY o.id DESC');
+    $ost->execute([$id]);
+    $list = [];
+    $spent = 0;
+    foreach ($ost as $o) {
+        $spent += (int) $o['total'];
+        $list[] = map_order($o, order_items((int) $o['id']));
+    }
+    json_out([
+        'ok' => true,
+        'dealer' => $dealer,
+        'orders' => $list,
+        'order_count' => count($list),
+        'total_spent' => $spent,
+        'total_spent_text' => money_try($spent),
+    ]);
+}
+
+function action_category_save(): void
+{
+    require_user('admin');
+    $in = $_POST ?: json_input();
+    $name = trim((string) ($in['name'] ?? ''));
+    if ($name === '') {
+        json_out(['ok' => false, 'error' => 'Kategori adı yazın.'], 400);
+    }
+    $dup = db()->prepare('SELECT id FROM categories WHERE lower(name) = lower(?)');
+    $dup->execute([$name]);
+    if ($dup->fetch()) {
+        json_out(['ok' => false, 'error' => 'Bu kategori zaten var.'], 400);
+    }
+    $base = slugify($name);
+    $slug = $base;
+    $n = 2;
+    $chk = db()->prepare('SELECT id FROM categories WHERE slug = ?');
+    while (true) {
+        $chk->execute([$slug]);
+        if (!$chk->fetch()) {
+            break;
+        }
+        $slug = $base . '-' . $n;
+        $n++;
+    }
+    $sort = (int) (db()->query('SELECT COALESCE(MAX(sort), 0) FROM categories')->fetchColumn() ?: 0) + 1;
+    db()->prepare('INSERT INTO categories (name, slug, sort) VALUES (?, ?, ?)')->execute([$name, $slug, $sort]);
+    $id = (int) db()->lastInsertId();
+    json_out(['ok' => true, 'category' => ['id' => $id, 'name' => $name, 'slug' => $slug]]);
 }

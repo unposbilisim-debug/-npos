@@ -223,7 +223,7 @@ button, input, select, textarea { font: inherit; }
 .total-box { background: #fff; padding: 16px; border-radius: 16px; box-shadow: var(--shadow); }
 .form { display: grid; gap: 10px; }
 label { font-size: 13px; font-weight: 700; color: var(--muted); display: grid; gap: 6px; }
-input[type=text], input[type=password], input[type=tel], input[type=number], select, textarea {
+input:not([type]), input[type=text], input[type=password], input[type=tel], input[type=number], input[type=search], input[type=email], select, textarea {
   width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px 12px; background: #fff;
 }
 textarea { min-height: 80px; }
@@ -263,6 +263,51 @@ textarea { min-height: 80px; }
 }
 .photo-pick img { width: 100%; height: 220px; object-fit: cover; }
 .big-price input { font-size: 28px; font-weight: 800; padding: 16px; }
+
+body.admin .head-inner,
+body.admin .admin-head-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: min(1180px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 8px 0;
+  grid-template-columns: none;
+  grid-template-areas: none;
+}
+body.admin .logo { min-width: 0; flex: 1; }
+body.admin .logo-mark { min-width: 0; overflow: hidden; }
+body.admin .head-actions { flex-shrink: 0; }
+body.admin .head-actions .icon-btn {
+  min-width: auto;
+  flex-direction: row;
+  font-size: 13px;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+body.admin .admin-page { padding-top: 12px; padding-bottom: 12px; }
+body.admin .admin-page h2 { margin: 0 0 12px; font-size: 20px; }
+body.admin .admin-page h3 { margin: 18px 0 10px; font-size: 16px; }
+.add-card {
+  background: #fff; border-radius: 16px; padding: 14px; box-shadow: var(--shadow);
+  display: grid; gap: 12px;
+}
+.add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dealer-card { cursor: pointer; }
+.dealer-card:active { transform: scale(.99); }
+.dealer-head h2 { margin: 0 0 4px; }
+.dealer-head p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.order-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.back-link {
+  border: 0; background: transparent; color: var(--blue); font-weight: 800;
+  padding: 0 0 10px; cursor: pointer; font-size: 14px;
+}
+.cat-inline { display: flex; gap: 8px; align-items: end; }
+.cat-inline label { flex: 1; min-width: 0; }
+.cat-inline .btn { padding: 12px 12px; white-space: nowrap; height: fit-content; }
+.cat-new { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+.photo-hint { padding: 8px; }
 
 .toast {
   position: fixed; left: 50%; bottom: calc(90px + var(--safe-b)); transform: translateX(-50%);
@@ -352,4 +397,24 @@ footer.site { margin-top: 28px; padding: 24px 0 12px; color: #9aa3b2; font-size:
 @media (min-width: 901px) {
   body { padding-bottom: 24px; }
   .bottom-nav { display: none; }
+}
+@media (max-width: 900px) {
+  body.admin .head-inner,
+  body.admin .admin-head-inner {
+    display: flex !important;
+    flex-wrap: nowrap;
+    padding: 8px 0;
+    gap: 8px;
+  }
+  body.admin .admin-desk-only { display: none !important; }
+  body.admin .logo-img { width: 32px; height: 32px; border-radius: 8px; }
+  body.admin .logo-mark strong { font-size: 13px; }
+  body.admin .logo-mark em { font-size: 9px; }
+  body.admin .head-actions { gap: 0; }
+  body.admin .head-actions .icon-btn { min-width: 0; font-size: 13px; padding: 6px 8px; }
+  body.admin .photo-pick { min-height: 110px; }
+  body.admin .photo-pick img { height: 150px; }
+  body.admin .big-price input { font-size: 22px; padding: 12px; }
+  body.admin .add-row { grid-template-columns: 1fr 1fr; }
+  body.admin .admin-hero { grid-template-columns: 1fr 1fr; }
 }

@@ -268,6 +268,19 @@ function digits(string $s): string
     return preg_replace('/\D+/', '', $s) ?? '';
 }
 
+function slugify(string $name): string
+{
+    $map = [
+        'ş' => 's', 'Ş' => 's', 'ı' => 'i', 'İ' => 'i', 'ğ' => 'g', 'Ğ' => 'g',
+        'ü' => 'u', 'Ü' => 'u', 'ö' => 'o', 'Ö' => 'o', 'ç' => 'c', 'Ç' => 'c',
+    ];
+    $s = strtr($name, $map);
+    $s = strtolower($s);
+    $s = preg_replace('/[^a-z0-9]+/', '-', $s) ?? '';
+    $s = trim($s, '-');
+    return $s !== '' ? $s : 'kategori';
+}
+
 function product_image_url(string $image): string
 {
     if ($image === '') {

@@ -2,7 +2,8 @@ const APP = window.APP;
 const $ = (s, el = document) => el.querySelector(s);
 
 function api(action, opts = {}) {
-  const url = APP.api + '?action=' + encodeURIComponent(action);
+  const q = new URLSearchParams({ action, ...(opts.params || {}) });
+  const url = APP.api + '?' + q.toString();
   const isForm = opts.body instanceof FormData;
   return fetch(url, {
     method: opts.method || (opts.body ? 'POST' : 'GET'),
@@ -27,10 +28,17 @@ let scanStream = null;
 let scanTimer = null;
 let html5Scanner = null;
 
-function go(page) {
+function go(page, id) {
   S.page = page;
-  location.hash = '#/' + page;
+  location.hash = '#/' + page + (id ? '/' + id : '');
   render();
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function loginView() {
@@ -48,12 +56,11 @@ function loginView() {
 
 function dash() {
   const pending = S.orders.filter((o) => o.status === 'pending').length;
-  return `<div class="wrap">
+  return `<div class="wrap admin-page">
     <div class="admin-hero">
       <div class="stat"><span>Bekleyen sipariş</span><b>${pending}</b></div>
       <div class="stat"><span>Ürün</span><b>${S.products.length}</b></div>
     </div>
-    <button class="btn orange block" onclick="go('ekle')">📷 Barkod oku, fotoğraf çek, ürün ekle</button>
     <h3>Son siparişler</h3>
     ${S.orders.slice(0, 8).map(orderCard).join('') || '<div class="empty">Sipariş yok</div>'}
   </div>`;
@@ -62,7 +69,7 @@ function dash() {
 function orderCard(o) {
   return `<div class="order">
     <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
-      <div><b>#${o.id} ${o.dealer_company || o.dealer_name}</b><div style="font-size:13px;color:var(--muted)">${o.dealer_phone}</div></div>
+      <div><b>#${o.id} ${o.dealer_company || o.dealer_name}</b><div style="font-size:13px;color:var(--muted)">${o.dealer_phone}</div><div class="order-meta">${fmtDate(o.created_at)}</div></div>
       <span class="pill ${o.status}">${o.status_text}</span>
     </div>
     <div style="margin:8px 0">${o.items.map((i) => `${i.qty}× ${i.name}`).join('<br>')}</div>
@@ -76,36 +83,48 @@ function orderCard(o) {
 }
 
 function addView() {
-  return `<div class="wrap" style="padding-top:12px">
-    <h2>Ürün ekle / güncelle</h2>
-    <p style="color:var(--muted)">Kamerayı ürüne tutun. Barkod okununca varsa ürün dolar, yoksa yeni kayıt açılır.</p>
-    <div class="form">
-      <button class="btn block" id="scanBtn">📷 Barkodu kameradan oku</button>
+  const catOpts = S.cats.map((c) => `<option value="${c.id}">${c.name}</option>`).join('');
+  return `<div class="wrap admin-page">
+    <h2>Ürün ekle</h2>
+    <div class="add-card">
+      <button class="btn ghost" id="scanBtn" type="button">Barkodu kameradan oku</button>
       <div id="scanWrap" class="scan-box hidden">
         <video id="video" autoplay playsinline></video>
         <div id="reader"></div>
       </div>
-      <label>Barkod<input id="barcode" placeholder="Elle de yazabilirsiniz" inputmode="numeric"></label>
-      <label class="photo-pick" id="photoBox">📷 Ürünün fotoğrafını çekin
+      <label>Barkod<input id="barcode" type="text" placeholder="Elle de yazabilirsiniz" inputmode="numeric" autocomplete="off"></label>
+      <label class="photo-pick" id="photoBox">
+        <span class="photo-hint">Fotoğraf çek veya galeriden seç</span>
         <input id="photo" type="file" accept="image/*" capture="environment" class="hidden">
         <img id="preview" class="hidden" alt="">
       </label>
-      <label>Ürün adı<input id="name" placeholder="Örn. Pioneer 16cm hoparlör"></label>
-      <label>Marka<input id="brand" placeholder="Pioneer, JBL, Alpine..."></label>
-      <label>Kategori<select id="cat"><option value="">Seçin</option>${S.cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select></label>
-      <label class="big-price">Bayi fiyatı (₺)<input id="price" inputmode="decimal" placeholder="0,00"></label>
-      <label>Stok<input id="stock" type="number" value="1"></label>
-      <label>Açıklama<textarea id="desc"></textarea></label>
+      <label>Ürün adı<input id="name" type="text" placeholder="Örn. Pioneer 16cm hoparlör"></label>
+      <div class="add-row">
+        <label>Marka<input id="brand" type="text" placeholder="Pioneer, JBL..."></label>
+        <label>Stok<input id="stock" type="number" value="1" min="0"></label>
+      </div>
+      <div class="cat-inline">
+        <label>Kategori
+          <select id="cat"><option value="">Seçin</option>${catOpts}</select>
+        </label>
+        <button type="button" class="btn ghost" id="newCatBtn">+ Yeni</button>
+      </div>
+      <div id="newCatBox" class="cat-new hidden">
+        <label>Yeni kategori adı<input id="newCatName" type="text" placeholder="Örn. Sis Lambası"></label>
+        <button type="button" class="btn" id="saveCat">Kaydet</button>
+      </div>
+      <label class="big-price">Bayi fiyatı (₺)<input id="price" type="text" inputmode="decimal" placeholder="0,00"></label>
+      <label>Açıklama<textarea id="desc" rows="3"></textarea></label>
       <input type="hidden" id="pid" value="">
-      <button class="btn block" id="save">Kaydet</button>
+      <button class="btn block" id="save">Ürünü kaydet</button>
     </div>
   </div>`;
 }
 
 function productsView() {
-  return `<div class="wrap" style="padding-top:12px">
+  return `<div class="wrap admin-page">
     <h2>Ürünler</h2>
-    <input id="pq" placeholder="Ara..." style="margin-bottom:10px">
+    <input id="pq" placeholder="Ürün ara..." style="margin-bottom:10px">
     <div class="grid" id="plist">${S.products.map(p => `<article class="card" data-edit="${p.id}">
       <div class="ph"><img src="${p.image}"></div>
       <div class="body"><div class="brand-l">${p.brand || ''}</div><h3>${p.name}</h3><div class="price">${p.price_text}</div></div>
@@ -114,23 +133,36 @@ function productsView() {
 }
 
 function dealersView() {
-  return `<div class="wrap" style="padding-top:12px">
+  return `<div class="wrap admin-page">
     <h2>Bayiler</h2>
-    <div id="dlist" class="empty">Yükleniyor…</div>
+    <p style="color:var(--muted);margin:0 0 10px">Bir bayiye dokunun, alışveriş geçmişini görün.</p>
+    <div id="dlist">Yükleniyor…</div>
     <h3>Yeni bayi</h3>
-    <div class="form" style="background:#fff;padding:14px;border-radius:16px">
+    <div class="add-card">
       <label>Ad<input id="dn"></label>
       <label>Firma<input id="dc"></label>
-      <label>Telefon<input id="dp"></label>
-      <label>Şehir<input id="dci"></label>
+      <div class="add-row">
+        <label>Telefon<input id="dp"></label>
+        <label>Şehir<input id="dci"></label>
+      </div>
       <label>Şifre<input id="dw" type="password"></label>
-      <button class="btn" id="dsave">Bayi kaydet</button>
+      <button class="btn block" id="dsave">Bayi kaydet</button>
     </div>
   </div>`;
 }
 
+function dealerHistoryView() {
+  return `<div class="wrap admin-page">
+    <button type="button" class="back-link" onclick="go('bayiler')">← Bayilere dön</button>
+    <div id="dealerHead" class="empty">Yükleniyor…</div>
+    <h3>Alışveriş geçmişi</h3>
+    <div id="dealerOrders"></div>
+  </div>`;
+}
+
 async function render() {
-  const page = (location.hash.replace('#/', '') || (S.user ? 'siparis' : 'login'));
+  const raw = location.hash.replace(/^#\/?/, '') || (S.user ? 'siparis' : 'login');
+  const [page, id] = raw.split('/');
   S.page = page;
   if (!S.user) {
     $('#view').innerHTML = loginView();
@@ -148,8 +180,9 @@ async function render() {
   if (page === 'ekle') $('#view').innerHTML = addView();
   else if (page === 'urunler') $('#view').innerHTML = productsView();
   else if (page === 'bayiler') $('#view').innerHTML = dealersView();
+  else if (page === 'bayi') $('#view').innerHTML = dealerHistoryView();
   else $('#view').innerHTML = dash();
-  bindAdmin(page);
+  bindAdmin(page, id);
 }
 
 async function loadAll() {
@@ -163,7 +196,7 @@ async function loadAll() {
   S.products = products.products;
 }
 
-function bindAdmin(page) {
+function bindStatusButtons() {
   document.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', async () => {
     try {
       await api('order_status', { body: { id: Number(b.dataset.st), status: b.dataset.to } });
@@ -172,6 +205,14 @@ function bindAdmin(page) {
       render();
     } catch (e) { toast(e.message); }
   }));
+}
+
+function bindAdmin(page, id) {
+  document.querySelectorAll('.bottom-nav [data-go]').forEach((b) => {
+    const on = b.dataset.go === page || (page === 'bayi' && b.dataset.go === 'bayiler');
+    b.classList.toggle('on', on);
+  });
+  bindStatusButtons();
   if (page === 'ekle') {
     bindAdd();
     if (S.editProduct) {
@@ -193,8 +234,21 @@ function bindAdmin(page) {
   }
   if (page === 'bayiler') {
     api('dealers').then((d) => {
-      $('#dlist').innerHTML = d.dealers.map((x) => `<div class="order"><b>${x.company || x.name}</b><div>${x.phone} · ${x.city || ''}</div></div>`).join('');
-    });
+      const list = $('#dlist');
+      if (!d.dealers.length) {
+        list.innerHTML = '<div class="empty">Bayi yok</div>';
+        return;
+      }
+      list.innerHTML = d.dealers.map((x) => `<div class="order dealer-card" data-dealer="${x.id}">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+          <div><b>${x.company || x.name}</b><div style="font-size:13px;color:var(--muted)">${x.phone}${x.city ? ' · ' + x.city : ''}</div></div>
+          <span class="pill approved">Geçmiş</span>
+        </div>
+      </div>`).join('');
+      list.querySelectorAll('[data-dealer]').forEach((el) => {
+        el.addEventListener('click', () => go('bayi', el.dataset.dealer));
+      });
+    }).catch((e) => { $('#dlist').innerHTML = `<div class="empty">${e.message}</div>`; });
     $('#dsave').onclick = async () => {
       try {
         await api('dealer_save', { body: { name: $('#dn').value, company: $('#dc').value, phone: $('#dp').value, city: $('#dci').value, password: $('#dw').value } });
@@ -202,6 +256,32 @@ function bindAdmin(page) {
         render();
       } catch (e) { toast(e.message); }
     };
+  }
+  if (page === 'bayi') loadDealerHistory(id);
+}
+
+async function loadDealerHistory(id) {
+  if (!id) {
+    $('#dealerHead').textContent = 'Bayi bulunamadı';
+    return;
+  }
+  try {
+    const d = await api('dealer_orders', { params: { id } });
+    const x = d.dealer;
+    const head = $('#dealerHead');
+    head.className = 'dealer-head';
+    head.innerHTML = `<h2>${x.company || x.name}</h2>
+      <p>${x.name} · ${x.phone}${x.city ? ' · ' + x.city : ''}</p>
+      <div class="admin-hero">
+        <div class="stat"><span>Sipariş</span><b>${d.order_count}</b></div>
+        <div class="stat"><span>Toplam alışveriş</span><b>${d.total_spent_text}</b></div>
+      </div>`;
+    $('#dealerOrders').innerHTML = d.orders.length
+      ? d.orders.map(orderCard).join('')
+      : '<div class="empty">Bu bayinin henüz siparişi yok</div>';
+    bindStatusButtons();
+  } catch (e) {
+    $('#dealerHead').textContent = e.message;
   }
 }
 
@@ -218,21 +298,44 @@ function fillProduct(p) {
   if (p.image) {
     $('#preview').src = p.image;
     $('#preview').classList.remove('hidden');
+    $('.photo-hint')?.classList.add('hidden');
   }
 }
 
 function bindAdd() {
-  $('#photoBox').onclick = () => $('#photo').click();
   $('#photo').onchange = () => {
     const f = $('#photo').files[0];
     if (!f) return;
     const url = URL.createObjectURL(f);
     $('#preview').src = url;
     $('#preview').classList.remove('hidden');
+    $('.photo-hint')?.classList.add('hidden');
   };
   $('#barcode').addEventListener('change', () => lookupBarcode($('#barcode').value));
   $('#scanBtn').onclick = toggleScan;
   $('#save').onclick = saveProduct;
+  $('#newCatBtn').onclick = () => $('#newCatBox').classList.toggle('hidden');
+  $('#saveCat').onclick = saveCategory;
+}
+
+async function saveCategory() {
+  const name = ($('#newCatName').value || '').trim();
+  if (!name) {
+    toast('Kategori adı yazın');
+    return;
+  }
+  try {
+    const d = await api('category_save', { body: { name } });
+    S.cats.push(d.category);
+    const opt = document.createElement('option');
+    opt.value = String(d.category.id);
+    opt.textContent = d.category.name;
+    $('#cat').appendChild(opt);
+    $('#cat').value = String(d.category.id);
+    $('#newCatName').value = '';
+    $('#newCatBox').classList.add('hidden');
+    toast('Kategori eklendi');
+  } catch (e) { toast(e.message); }
 }
 
 async function lookupBarcode(code) {
