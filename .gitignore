@@ -1,0 +1,17 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+data/*.db
+data/*.db-journal
+data/config.json
+data/inbox/
+data/processed/
+data/exports/
+*.log
+.DS_Store
+.idea/
+.vscode/
+.venv/
+__pycache__/

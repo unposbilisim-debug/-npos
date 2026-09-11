@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Vardiya Tarih="2026-09-10" No="2" Istasyon="Ünye Shell">
+  <Satislar>
+    <Satis>
+      <Sira>1</Sira>
+      <Tarih>2026-09-10T08:12:33</Tarih>
+      <Pompa>1</Pompa>
+      <Tabanca>1</Tabanca>
+      <Yakit>MOTORIN</Yakit>
+      <Miktar>4560</Miktar>
+      <Tutar>228000</Tutar>
+      <BirimFiyat>5000</BirimFiyat>
+      <Pompaci>Ali</Pompaci>
+      <Odeme>100</Odeme>
+      <Plaka>52ABC123</Plaka>
+    </Satis>
+    <Satis>
+      <Sira>2</Sira>
+      <Tarih>2026-09-10T08:41:10</Tarih>
+      <Pompa>1</Pompa>
+      <Tabanca>2</Tabanca>
+      <Yakit>KURŞUNSUZ 95</Yakit>
+      <Miktar>3210</Miktar>
+      <Tutar>176550</Tutar>
+      <BirimFiyat>5500</BirimFiyat>
+      <Pompaci>Ali</Pompaci>
+      <Odeme>101</Odeme>
+    </Satis>
+    <Satis>
+      <Sira>3</Sira>
+      <Tarih>2026-09-10T09:05:44</Tarih>
+      <Pompa>2</Pompa>
+      <Tabanca>1</Tabanca>
+      <Yakit>MOTORIN</Yakit>
+      <Miktar>7800</Miktar>
+      <Tutar>390000</Tutar>
+      <BirimFiyat>5000</BirimFiyat>
+      <Pompaci>Mehmet</Pompaci>
+      <Odeme>102</Odeme>
+      <Cari>FILO-17</Cari>
+      <Plaka>34FIL017</Plaka>
+    </Satis>
+    <Satis>
+      <Sira>4</Sira>
+      <Tarih>2026-09-10T10:18:02</Tarih>
+      <Pompa>2</Pompa>
+      <Tabanca>2</Tabanca>
+      <Yakit>LPG</Yakit>
+      <Miktar>2100</Miktar>
+      <Tutar>52500</Tutar>
+      <BirimFiyat>2500</BirimFiyat>
+      <Pompaci>Mehmet</Pompaci>
+      <Odeme>103</Odeme>
+      <Cari>TAŞI-04</Cari>
+    </Satis>
+    <Satis>
+      <Sira>5</Sira>
+      <Tarih>2026-09-10T11:02:19</Tarih>
+      <Pompa>1</Pompa>
+      <Tabanca>1</Tabanca>
+      <Yakit>MOTORIN</Yakit>
+      <Miktar>1250</Miktar>
+      <Tutar>62500</Tutar>
+      <BirimFiyat>5000</BirimFiyat>
+      <Pompaci>Ali</Pompaci>
+      <Odeme>100</Odeme>
+    </Satis>
+  </Satislar>
+  <Endeksler>
+    <Tabanca Pompa="1" No="1" Yakit="MOTORIN" Acilis="12500000" Kapanis="12505810"/>
+    <Tabanca Pompa="1" No="2" Yakit="KURŞUNSUZ 95" Acilis="8040000" Kapanis="8043210"/>
+    <Tabanca Pompa="2" No="1" Yakit="MOTORIN" Acilis="9900000" Kapanis="9907800"/>
+    <Tabanca Pompa="2" No="2" Yakit="LPG" Acilis="4100000" Kapanis="4102100"/>
+  </Endeksler>
+</Vardiya>
