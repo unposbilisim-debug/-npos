@@ -14,11 +14,14 @@ start.bat
 
 veya Visual Studio ile `UnposVardiyaTakip.sln` açın, `UnposVardiyaTakip.Win` başlatın.
 
-Yayımlama:
+Yayımlama (hazır EXE):
 
 ```bat
-dotnet publish src\UnposVardiyaTakip.Win\UnposVardiyaTakip.Win.csproj -c Release -r win-x64 --self-contained true
+dotnet publish src\UnposVardiyaTakip.Win\UnposVardiyaTakip.Win.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
+
+GitHub Actions her push’ta `UnposVardiyaTakip.zip` üretir: **Actions** sekmesi → son workflow → **UnposVardiyaTakip** artifact.
+
 
 ## Kullanım
 
