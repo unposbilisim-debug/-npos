@@ -66,6 +66,6 @@ $js = asset('assets/js/app.js');
       admin: <?= json_encode($admin) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=12"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=13"></script>
 </body>
 </html>

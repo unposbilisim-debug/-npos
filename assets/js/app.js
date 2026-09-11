@@ -75,10 +75,9 @@ function productCard(p) {
 
 function viewHome() {
   const campaigns = [
-    { img: APP.base + '/assets/img/banners/kampanya.jpg?v=11' },
-    { img: APP.base + '/assets/img/banners/kampanya2.jpg?v=11' },
-    { img: APP.base + '/assets/img/banners/kampanya3.jpg?v=11' },
-    { img: APP.base + '/assets/img/banners/kampanya4.jpg?v=11' },
+    { img: APP.base + '/assets/img/banners/kampanya.jpg?v=13' },
+    { img: APP.base + '/assets/img/banners/kampanya2.jpg?v=13' },
+    { img: APP.base + '/assets/img/banners/kampanya3.jpg?v=13' },
   ];
   const slides = campaigns.concat(campaigns[0]);
   const catImg = (slug) => APP.base + '/assets/img/cats/' + slug + '.png';
