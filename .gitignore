@@ -2,6 +2,7 @@ data/*.sqlite
 data/*.sqlite-journal
 assets/uploads/*
 !assets/uploads/.gitkeep
+assets/img/logo-full.png
 .DS_Store
 *.log
 .idea/

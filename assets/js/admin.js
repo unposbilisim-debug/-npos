@@ -90,8 +90,8 @@ function addView() {
         <input id="photo" type="file" accept="image/*" capture="environment" class="hidden">
         <img id="preview" class="hidden" alt="">
       </label>
-      <label>Ürün adı<input id="name" placeholder="Örn. Hugin T300"></label>
-      <label>Marka<input id="brand" placeholder="Hugin, PAX..."></label>
+      <label>Ürün adı<input id="name" placeholder="Örn. Pioneer 16cm hoparlör"></label>
+      <label>Marka<input id="brand" placeholder="Pioneer, JBL, Alpine..."></label>
       <label>Kategori<select id="cat"><option value="">Seçin</option>${S.cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select></label>
       <label class="big-price">Bayi fiyatı (₺)<input id="price" inputmode="decimal" placeholder="0,00"></label>
       <label>Stok<input id="stock" type="number" value="1"></label>

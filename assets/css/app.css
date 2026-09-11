@@ -1,16 +1,16 @@
 :root {
-  --blue: #1473c8;
-  --blue-d: #0d5aa0;
-  --orange: #ff8a00;
-  --navy: #1a2332;
-  --muted: #667085;
-  --line: #e6ebf1;
-  --bg: #f4f6f9;
+  --blue: #e10600;
+  --blue-d: #b10500;
+  --orange: #e10600;
+  --navy: #111114;
+  --muted: #6b7280;
+  --line: #eceef2;
+  --bg: #f3f4f7;
   --ok: #16a34a;
   --warn: #d97706;
   --bad: #e11d48;
   --card: #fff;
-  --shadow: 0 8px 28px rgba(16, 38, 70, .08);
+  --shadow: 0 8px 28px rgba(16, 16, 24, .08);
   --radius: 16px;
   --safe-b: env(safe-area-inset-bottom, 0px);
 }
@@ -29,10 +29,10 @@ button, input, select, textarea { font: inherit; }
 .hidden { display: none !important; }
 
 .topbar {
-  background: #fff;
-  border-bottom: 1px solid var(--line);
+  background: #07070b;
+  border-bottom: 0;
   font-size: 13px;
-  color: var(--muted);
+  color: #c9c9d1;
 }
 .topbar-inner, .head-inner, .nav-inner, .wrap {
   width: min(1180px, calc(100% - 24px));
@@ -40,7 +40,7 @@ button, input, select, textarea { font: inherit; }
 }
 .topbar-inner { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; }
 .head {
-  background: #fff;
+  background: #0b0b12;
   position: sticky; top: 0; z-index: 40;
 }
 .head-inner {
@@ -48,19 +48,19 @@ button, input, select, textarea { font: inherit; }
   grid-template-columns: auto 1fr auto;
   gap: 16px;
   align-items: center;
-  padding: 12px 0;
+  padding: 10px 0;
 }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 22px; color: var(--blue); letter-spacing: -.03em; }
-.logo img { width: 44px; height: 44px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; color: #fff; letter-spacing: -.03em; }
+.logo img { width: auto; height: 56px; max-width: 140px; object-fit: contain; background: #fff; border-radius: 10px; }
 .search {
-  display: flex; background: #f3f6fb; border-radius: 999px; overflow: hidden; border: 1px solid #e8eef6;
+  display: flex; background: #fff; border-radius: 999px; overflow: hidden; border: 0;
 }
 .search input { flex: 1; border: 0; background: transparent; padding: 12px 18px; outline: none; }
 .search button { border: 0; background: var(--blue); color: #fff; padding: 0 18px; cursor: pointer; }
 .head-actions { display: flex; gap: 8px; align-items: center; }
 .icon-btn {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  border: 0; background: transparent; cursor: pointer; color: var(--navy); min-width: 64px; font-size: 12px; font-weight: 700;
+  border: 0; background: transparent; cursor: pointer; color: #fff; min-width: 64px; font-size: 12px; font-weight: 700;
 }
 .icon-btn .badge {
   position: absolute; top: -6px; right: 10px; background: var(--orange); color: #fff;
@@ -68,7 +68,7 @@ button, input, select, textarea { font: inherit; }
 }
 .icon-btn { position: relative; }
 .cats {
-  background: var(--blue);
+  background: #111118;
   box-shadow: inset 0 -3px 0 var(--orange);
 }
 .nav-inner { display: flex; gap: 4px; overflow-x: auto; }
@@ -78,8 +78,15 @@ button, input, select, textarea { font: inherit; }
 }
 .nav-inner .on, .nav-inner a:hover { background: rgba(255,255,255,.12); }
 
-.hero { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; margin: 18px auto; }
-.hero img { width: 100%; height: 210px; object-fit: cover; border-radius: 18px; }
+.hero { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 18px auto; }
+.hero img { width: 100%; height: auto; max-height: 420px; object-fit: contain; border-radius: 18px; background: #fff; }
+.cat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px auto 22px; }
+.cat-tile {
+  background: #fff; border-radius: 14px; min-height: 92px; padding: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  text-align: center; font-weight: 800; font-size: 13px; box-shadow: var(--shadow); cursor: pointer; border: 0;
+}
+.cat-tile span { font-size: 26px; }
 .brands { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px auto 22px; }
 .brand {
   background: #fff; border-radius: 14px; min-height: 78px; display: grid; place-items: center;
@@ -183,13 +190,13 @@ textarea { min-height: 80px; }
 footer.site { margin-top: 28px; padding: 24px 0 12px; color: #9aa3b2; font-size: 13px; text-align: center; }
 
 @media (max-width: 900px) {
-  .hero, .grid, .detail, .brands, .admin-hero, .head-inner { grid-template-columns: 1fr 1fr; }
+  .hero, .grid, .detail, .brands, .admin-hero, .head-inner, .cat-strip { grid-template-columns: 1fr 1fr; }
   .head-inner { grid-template-columns: 1fr auto; }
   .search { grid-column: 1 / -1; }
   .topbar { display: none; }
   .grid { grid-template-columns: 1fr 1fr; }
   .hero { grid-template-columns: 1fr; }
-  .hero img { height: 160px; }
+  .hero img { height: auto; max-height: 320px; }
   .brands { grid-template-columns: 1fr 1fr; }
 }
 @media (min-width: 901px) {

@@ -15,7 +15,7 @@ $js = asset('assets/js/admin.js');
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1473c8">
+  <meta name="theme-color" content="#0b0b12">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Yılmaz Yönetim">
   <title><?= htmlspecialchars($title) ?></title>
@@ -29,7 +29,7 @@ $js = asset('assets/js/admin.js');
 <body>
   <header class="head">
     <div class="head-inner" style="grid-template-columns:1fr auto">
-      <a class="logo" href="<?= htmlspecialchars($home) ?>"><img src="<?= htmlspecialchars($icon) ?>" alt=""> Yönetim</a>
+      <a class="logo" href="<?= htmlspecialchars($home) ?>"><img src="<?= htmlspecialchars(asset('assets/img/logo.png')) ?>" alt=""> Yönetim</a>
       <div class="head-actions">
         <button class="icon-btn" onclick="go('siparis')">Sipariş</button>
         <button class="icon-btn" onclick="go('ekle')">Ürün ekle</button>

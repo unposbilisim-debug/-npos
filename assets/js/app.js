@@ -74,17 +74,28 @@ function productCard(p) {
 }
 
 function viewHome() {
+  const icons = {
+    'arac-ses': '🔊',
+    'multimedya': '🖥️',
+    'oto-guvenlik': '📹',
+    'aydinlatma': '💡',
+    'aksesuar': '🔌',
+    'mobil-yasam': '📱',
+    'adaptor': '🔋',
+  };
   return `
     <div class="hero wrap">
-      <img src="${APP.base}/assets/img/banners/b1.png" alt="">
-      <img src="${APP.base}/assets/img/banners/b2.png" alt="">
-      <img src="${APP.base}/assets/img/banners/b3.png" alt="">
+      <img src="${APP.base}/assets/img/logo.png" alt="Yılmaz Elektronik">
+    </div>
+    <div class="wrap"><div class="section-title"><h2>Kategoriler</h2></div></div>
+    <div class="cat-strip wrap">
+      ${state.cats.map((c) => `<button class="cat-tile" onclick="location.hash='#/kategori/${c.slug}'"><span>${icons[c.slug] || '📦'}</span>${c.name}</button>`).join('')}
     </div>
     <div class="brands wrap">
-      ${['HUGIN','PAX','INGENICO','PAYGO','MIX','dbPOS','ZEBRA','HONEYWELL'].map(b => `<div class="brand">${b}</div>`).join('')}
+      ${['PIONEER','JBL','ALPINE','KENWOOD','SONY','PHOENIX GOLD','HERTZ','FOCAL'].map(b => `<div class="brand">${b}</div>`).join('')}
     </div>
     <div class="wrap">
-      <div class="section-title"><h2>Toptan ürünler</h2></div>
+      <div class="section-title"><h2>Çok satan ürünler</h2></div>
       <div class="grid">${state.products.map(productCard).join('')}</div>
     </div>`;
 }

@@ -6,7 +6,6 @@ $base = BASE_PATH;
 $api = base_url('api.php');
 $admin = base_url('admin.php');
 $manifest = base_url('manifest.webmanifest');
-$icon = asset('assets/img/icon-192.png');
 $logo = asset('assets/img/logo.png');
 $apple = asset('assets/img/apple-touch-icon.png');
 $css = asset('assets/css/app.css');
@@ -16,10 +15,10 @@ $js = asset('assets/js/app.js');
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1473c8">
+  <meta name="theme-color" content="#0b0b12">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Yılmaz Toptan">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Yılmaz Elektronik">
   <title><?= htmlspecialchars($title) ?> — Bayi sipariş</title>
   <link rel="manifest" href="<?= htmlspecialchars($manifest) ?>">
   <link rel="icon" href="<?= htmlspecialchars(asset('assets/img/favicon.png')) ?>">
@@ -31,13 +30,12 @@ $js = asset('assets/js/app.js');
 <body>
   <div class="topbar"><div class="topbar-inner">
     <span><?= htmlspecialchars(SITE_PHONE) ?> · <?= htmlspecialchars(SITE_EMAIL) ?></span>
-    <span>Bayiler için toptan POS ve yazar kasa</span>
+    <span>Otomotiv elektronik toptan satış · Güçlü markalar · Hızlı tedarik</span>
   </div></div>
   <header class="head">
     <div class="head-inner">
       <a class="logo" href="<?= htmlspecialchars(base_url()) ?>">
-        <img src="<?= htmlspecialchars($icon) ?>" alt="">
-        yilmaztoptan
+        <img src="<?= htmlspecialchars($logo) ?>" alt="Yılmaz Elektronik">
       </a>
       <form class="search" id="searchForm">
         <input id="q" placeholder="Aramak istediğin ürünü yaz, kolayca bul!">
@@ -51,10 +49,10 @@ $js = asset('assets/js/app.js');
   </header>
   <nav class="cats"><div class="nav-inner"></div></nav>
   <main id="view"></main>
-  <footer class="site wrap">Yılmaz Toptan · B2B bayi sipariş sistemi · Online ödeme sonra eklenecek</footer>
+  <footer class="site wrap">Yılmaz Elektronik · Otomotiv elektronik toptan satış · Bayi sipariş sistemi</footer>
   <nav class="bottom-nav shop">
     <button data-go="#/home">🏠<br>Vitrin</button>
-    <button data-go="#/kategori/yazarkasa-pos">📦<br>Ürünler</button>
+    <button data-go="#/kategori/arac-ses">📦<br>Ürünler</button>
     <button data-go="#/sepet">🛒<br>Sepet</button>
     <button data-go="#/hesabim">👤<br>Hesabım</button>
   </nav>

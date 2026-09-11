@@ -1,12 +1,12 @@
 {
-  "name": "Yılmaz Toptan",
+  "name": "Yılmaz Elektronik",
   "short_name": "Yılmaz",
-  "description": "Bayiler için toptan POS ve yazar kasa sipariş uygulaması",
+  "description": "Otomotiv elektronik toptan satış — bayi sipariş uygulaması",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#1473c8",
-  "theme_color": "#1473c8",
+  "background_color": "#0b0b12",
+  "theme_color": "#0b0b12",
   "lang": "tr",
   "icons": [
     { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
