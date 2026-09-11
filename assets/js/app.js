@@ -76,14 +76,17 @@ function productCard(p) {
 function viewHome() {
   const campaigns = [
     { img: APP.base + '/assets/img/banners/kampanya.jpg', href: '#/home' },
+    { img: APP.base + '/assets/img/banners/kampanya2.jpg', href: '#/home' },
   ];
   const catImg = (slug) => APP.base + '/assets/img/cats/' + slug + '.png';
   return `
     <div class="hero wrap">
       <div class="hero-pop" id="heroPop">
-        ${campaigns.map((c, i) => `<a class="hero-slide${i === 0 ? ' on' : ''}" href="${c.href}">
-          <img src="${c.img}" alt="Yılmaz Elektronik kampanya">
-        </a>`).join('')}
+        <div class="hero-track" id="heroTrack">
+          ${campaigns.map((c) => `<a class="hero-slide" href="${c.href}">
+            <img src="${c.img}" alt="Yılmaz Elektronik kampanya">
+          </a>`).join('')}
+        </div>
       </div>
     </div>
     <div class="wrap"><div class="section-title"><h2>Kategoriler</h2></div></div>
@@ -288,18 +291,15 @@ function startHeroRotate() {
     clearInterval(heroTimer);
     heroTimer = null;
   }
+  const track = $('#heroTrack');
   const slides = $$('.hero-slide');
-  if (slides.length < 2) return;
+  if (!track || slides.length < 2) return;
   let i = 0;
   const show = (n) => {
     i = (n + slides.length) % slides.length;
-    slides.forEach((s, k) => s.classList.toggle('on', k === i));
-    $$('.hero-dot').forEach((d, k) => d.classList.toggle('on', k === i));
+    track.style.transform = 'translateX(-' + (i * 100) + '%)';
   };
-  $('#heroPrev')?.addEventListener('click', (e) => { e.stopPropagation(); show(i - 1); });
-  $('#heroNext')?.addEventListener('click', (e) => { e.stopPropagation(); show(i + 1); });
-  $$('.hero-dot').forEach((d) => d.addEventListener('click', (e) => { e.stopPropagation(); show(Number(d.dataset.hero)); }));
-  heroTimer = setInterval(() => show(i + 1), 4000);
+  heroTimer = setInterval(() => show(i + 1), 4500);
 }
 
 function bindChrome() {

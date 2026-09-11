@@ -50,9 +50,10 @@ button, input, select, textarea { font: inherit; }
   align-items: center;
   padding: 10px 0;
 }
-.logo-mark { display: flex; flex-direction: column; line-height: 1; }
-.logo-mark b { font-size: 22px; letter-spacing: .06em; font-style: normal; }
-.logo-mark i { font-size: 12px; color: #e10600; font-style: normal; font-weight: 800; letter-spacing: .18em; margin-top: 3px; }
+.logo { display: flex; align-items: center; flex-shrink: 0; min-width: 210px; }
+.logo-mark { display: flex; flex-direction: row; align-items: baseline; gap: 8px; white-space: nowrap; line-height: 1; }
+.logo-mark b { font-size: 26px; letter-spacing: .04em; font-style: normal; color: #fff; font-weight: 800; }
+.logo-mark i { font-size: 22px; color: #e10600; font-style: normal; font-weight: 800; letter-spacing: .08em; }
 .search {
   display: flex; background: #fff; border-radius: 999px; overflow: hidden; border: 0;
 }
@@ -92,24 +93,32 @@ button, input, select, textarea { font: inherit; }
 }
 .nav-inner .on, .nav-inner a:hover { background: rgba(255,255,255,.12); }
 
-.hero { margin: 14px auto; }
+.hero { margin: 14px auto; width: min(1180px, calc(100% - 24px)); }
 .hero-pop {
   position: relative;
-  height: auto;
-  aspect-ratio: 2170 / 725;
-  max-height: 340px;
-  background: #0b0b12;
-  border-radius: 14px;
+  width: 100%;
   overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
   box-shadow: var(--shadow);
 }
-.hero-slide {
-  display: none;
-  height: 100%;
-  margin: 0;
+.hero-track {
+  display: flex;
+  width: 100%;
+  transition: transform .7s ease-in-out;
 }
-.hero-slide.on { display: block; height: 100%; }
-.hero-slide img { width: 100%; height: 100%; object-fit: contain; background: #0b0b12; }
+.hero-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  margin: 0;
+  display: block;
+}
+.hero-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
 .cat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px auto 22px; }
 .cat-tile {
   background: #fff; border-radius: 14px; min-height: 92px; padding: 12px;
@@ -226,7 +235,9 @@ footer.site { margin-top: 28px; padding: 24px 0 12px; color: #9aa3b2; font-size:
   .topbar { display: none; }
   .grid { grid-template-columns: 1fr 1fr; }
   .hero { grid-template-columns: 1fr; }
-  .hero-pop { max-height: 220px; }
+  .logo-mark b { font-size: 20px; }
+  .logo-mark i { font-size: 16px; }
+  .logo { min-width: 0; }
   .nav-inner { flex-wrap: wrap; overflow: visible; }
   .nav-inner button { flex: 1 1 25%; font-size: 11px; padding: 8px 4px; }
   .brands { grid-template-columns: 1fr 1fr; }
