@@ -25,7 +25,7 @@ $js = asset('assets/js/app.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=5">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=6">
 </head>
 <body>
   <div class="topbar"><div class="topbar-inner">
@@ -35,7 +35,8 @@ $js = asset('assets/js/app.js');
   <header class="head">
     <div class="head-inner">
       <a class="logo" href="<?= htmlspecialchars(base_url()) ?>">
-        <span class="logo-mark"><b>YILMAZ</b><i>ELEKTRONİK</i></span>
+        <span class="logo-badge" aria-hidden="true">Y</span>
+        <span class="logo-mark"><strong>YILMAZ</strong><em>ELEKTRONİK</em></span>
       </a>
       <form class="search" id="searchForm">
         <input id="q" placeholder="Aramak istediğin ürünü yaz, kolayca bul!">
@@ -65,6 +66,6 @@ $js = asset('assets/js/app.js');
       admin: <?= json_encode($admin) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=5"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=6"></script>
 </body>
 </html>

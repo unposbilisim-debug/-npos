@@ -50,10 +50,49 @@ button, input, select, textarea { font: inherit; }
   align-items: center;
   padding: 10px 0;
 }
-.logo { display: flex; align-items: center; flex-shrink: 0; min-width: 210px; }
-.logo-mark { display: flex; flex-direction: row; align-items: baseline; gap: 8px; white-space: nowrap; line-height: 1; }
-.logo-mark b { font-size: 26px; letter-spacing: .04em; font-style: normal; color: #fff; font-weight: 800; }
-.logo-mark i { font-size: 22px; color: #e10600; font-style: normal; font-weight: 800; letter-spacing: .08em; }
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  min-width: 168px;
+  color: #fff;
+}
+.logo-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e10600;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+.logo-mark {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1;
+}
+.logo-mark strong {
+  font-size: 20px;
+  letter-spacing: .14em;
+  font-style: normal;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff;
+  font-weight: 800;
+}
+.logo-mark em {
+  font-size: 11px;
+  color: #e10600;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: .18em;
+}
 .search {
   display: flex; background: #fff; border-radius: 999px; overflow: hidden; border: 0;
 }
@@ -93,31 +132,39 @@ button, input, select, textarea { font: inherit; }
 }
 .nav-inner .on, .nav-inner a:hover { background: rgba(255,255,255,.12); }
 
-.hero { margin: 14px auto; width: min(1180px, calc(100% - 24px)); }
+.hero {
+  width: 100%;
+  margin: 0 0 18px;
+  background: #0b0b12;
+}
 .hero-pop {
   position: relative;
   width: 100%;
   overflow: hidden;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: var(--shadow);
+  border-radius: 0;
+  background: #0b0b12;
+  height: clamp(200px, 34vw, 520px);
 }
 .hero-track {
   display: flex;
+  height: 100%;
   width: 100%;
-  transition: transform .7s ease-in-out;
+  transition: transform .8s ease-in-out;
+  will-change: transform;
 }
 .hero-slide {
   flex: 0 0 100%;
   width: 100%;
+  height: 100%;
   margin: 0;
   display: block;
 }
 .hero-slide img {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
   object-fit: cover;
+  object-position: center center;
 }
 .cat-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px auto 22px; }
 .cat-tile {
@@ -229,14 +276,14 @@ textarea { min-height: 80px; }
 footer.site { margin-top: 28px; padding: 24px 0 12px; color: #9aa3b2; font-size: 13px; text-align: center; }
 
 @media (max-width: 900px) {
-  .hero, .grid, .detail, .brands, .admin-hero, .head-inner, .cat-strip { grid-template-columns: 1fr 1fr; }
+  .grid, .detail, .brands, .admin-hero, .head-inner, .cat-strip { grid-template-columns: 1fr 1fr; }
   .head-inner { grid-template-columns: 1fr auto; }
   .search { grid-column: 1 / -1; }
   .topbar { display: none; }
   .grid { grid-template-columns: 1fr 1fr; }
-  .hero { grid-template-columns: 1fr; }
-  .logo-mark b { font-size: 20px; }
-  .logo-mark i { font-size: 16px; }
+  .logo-mark strong { font-size: 16px; }
+  .logo-mark em { font-size: 10px; }
+  .logo-badge { width: 36px; height: 36px; font-size: 16px; }
   .logo { min-width: 0; }
   .nav-inner { flex-wrap: wrap; overflow: visible; }
   .nav-inner button { flex: 1 1 25%; font-size: 11px; padding: 8px 4px; }

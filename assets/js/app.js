@@ -75,20 +75,22 @@ function productCard(p) {
 
 function viewHome() {
   const campaigns = [
-    { img: APP.base + '/assets/img/banners/kampanya.jpg', href: '#/home' },
-    { img: APP.base + '/assets/img/banners/kampanya2.jpg', href: '#/home' },
+    { img: APP.base + '/assets/img/banners/kampanya.jpg' },
+    { img: APP.base + '/assets/img/banners/kampanya2.jpg' },
+    { img: APP.base + '/assets/img/banners/kampanya3.jpg' },
   ];
+  const slides = campaigns.concat(campaigns[0]);
   const catImg = (slug) => APP.base + '/assets/img/cats/' + slug + '.png';
   return `
-    <div class="hero wrap">
+    <section class="hero" aria-label="Kampanyalar">
       <div class="hero-pop" id="heroPop">
         <div class="hero-track" id="heroTrack">
-          ${campaigns.map((c) => `<a class="hero-slide" href="${c.href}">
+          ${slides.map((c) => `<div class="hero-slide">
             <img src="${c.img}" alt="Yılmaz Elektronik kampanya">
-          </a>`).join('')}
+          </div>`).join('')}
         </div>
       </div>
-    </div>
+    </section>
     <div class="wrap"><div class="section-title"><h2>Kategoriler</h2></div></div>
     <div class="cat-strip wrap">
       ${state.cats.map((c) => `<button class="cat-tile" onclick="location.hash='#/kategori/${c.slug}'"><img src="${catImg(c.slug)}" alt=""><span>${c.name}</span></button>`).join('')}
@@ -286,6 +288,7 @@ function bindView(page) {
 }
 
 let heroTimer = null;
+let heroOnEnd = null;
 function startHeroRotate() {
   if (heroTimer) {
     clearInterval(heroTimer);
@@ -294,12 +297,27 @@ function startHeroRotate() {
   const track = $('#heroTrack');
   const slides = $$('.hero-slide');
   if (!track || slides.length < 2) return;
+  if (heroOnEnd) track.removeEventListener('transitionend', heroOnEnd);
+  const last = slides.length - 1;
   let i = 0;
-  const show = (n) => {
-    i = (n + slides.length) % slides.length;
-    track.style.transform = 'translateX(-' + (i * 100) + '%)';
+  const apply = (n, instant) => {
+    if (instant) {
+      track.style.transition = 'none';
+      track.style.transform = 'translateX(-' + (n * 100) + '%)';
+      void track.offsetHeight;
+      track.style.transition = '';
+    } else {
+      track.style.transition = '';
+      track.style.transform = 'translateX(-' + (n * 100) + '%)';
+    }
+    i = n;
   };
-  heroTimer = setInterval(() => show(i + 1), 4500);
+  heroOnEnd = (e) => {
+    if (e.target !== track) return;
+    if (i >= last) apply(0, true);
+  };
+  track.addEventListener('transitionend', heroOnEnd);
+  heroTimer = setInterval(() => apply(i + 1, false), 4200);
 }
 
 function bindChrome() {

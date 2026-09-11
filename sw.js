@@ -2,14 +2,14 @@ const BASE = self.location.pathname.replace(/\/sw\.js$/, '') || '';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open('yilmaz-v2').then((cache) =>
+    caches.open('yilmaz-v3').then((cache) =>
       cache.addAll([
         BASE + '/',
         BASE + '/index.php',
         BASE + '/admin.php',
-        BASE + '/assets/css/app.css?v=3',
-        BASE + '/assets/js/app.js?v=3',
-        BASE + '/assets/js/admin.js?v=3',
+        BASE + '/assets/css/app.css?v=6',
+        BASE + '/assets/js/app.js?v=6',
+        BASE + '/assets/js/admin.js?v=4',
         BASE + '/assets/img/icon-192.png',
         BASE + '/assets/img/icon-512.png',
         BASE + '/manifest.webmanifest',
@@ -21,7 +21,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== 'yilmaz-v2').map((k) => caches.delete(k)))).then(() => self.clients.claim())
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== 'yilmaz-v3').map((k) => caches.delete(k)))).then(() => self.clients.claim())
   );
 });
 
@@ -36,7 +36,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(req).then((res) => {
       const copy = res.clone();
-      caches.open('yilmaz-v2').then((c) => c.put(req, copy)).catch(() => {});
+      caches.open('yilmaz-v3').then((c) => c.put(req, copy)).catch(() => {});
       return res;
     }).catch(() => caches.match(req).then((r) => r || caches.match(BASE + '/')))
   );
