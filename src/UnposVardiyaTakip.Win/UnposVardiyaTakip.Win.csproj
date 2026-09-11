@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationTitle>ünpos Vardiya takip</ApplicationTitle>
+    <AssemblyName>UnposVardiyaTakip</AssemblyName>
+    <RootNamespace>UnposVardiyaTakip.Win</RootNamespace>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UnposVardiyaTakip.Core\UnposVardiyaTakip.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\samples\**\*" Link="samples\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
