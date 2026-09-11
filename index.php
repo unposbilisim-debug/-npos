@@ -25,7 +25,7 @@ $js = asset('assets/js/app.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=8">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=9">
 </head>
 <body>
   <div class="topbar"><div class="topbar-inner">
@@ -66,6 +66,6 @@ $js = asset('assets/js/app.js');
       admin: <?= json_encode($admin) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=8"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=9"></script>
 </body>
 </html>

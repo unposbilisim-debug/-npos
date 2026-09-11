@@ -82,7 +82,7 @@ function viewHome() {
   const slides = campaigns.concat(campaigns[0]);
   const catImg = (slug) => APP.base + '/assets/img/cats/' + slug + '.png';
   return `
-    <section class="hero" aria-label="Kampanyalar">
+    <section class="hero wrap" aria-label="Kampanyalar">
       <div class="hero-pop" id="heroPop">
         <div class="hero-track" id="heroTrack">
           ${slides.map((c) => `<div class="hero-slide">
