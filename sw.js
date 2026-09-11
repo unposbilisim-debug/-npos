@@ -7,9 +7,9 @@ self.addEventListener('install', (event) => {
         BASE + '/',
         BASE + '/index.php',
         BASE + '/admin.php',
-        BASE + '/assets/css/app.css',
-        BASE + '/assets/js/app.js',
-        BASE + '/assets/js/admin.js',
+        BASE + '/assets/css/app.css?v=3',
+        BASE + '/assets/js/app.js?v=3',
+        BASE + '/assets/js/admin.js?v=3',
         BASE + '/assets/img/icon-192.png',
         BASE + '/assets/img/icon-512.png',
         BASE + '/manifest.webmanifest',
@@ -20,7 +20,9 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== 'yilmaz-v2').map((k) => caches.delete(k)))).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (event) => {
