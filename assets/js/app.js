@@ -73,6 +73,18 @@ function productCard(p) {
   </article>`;
 }
 
+function popularProducts() {
+  const byCat = [];
+  const seen = new Set();
+  for (const p of state.products) {
+    if (seen.has(p.category_id)) continue;
+    seen.add(p.category_id);
+    byCat.push(p);
+  }
+  const extra = state.products.filter((p) => !byCat.includes(p));
+  return [...byCat, ...extra].slice(0, 6);
+}
+
 function viewHome() {
   const icons = {
     'arac-ses': '🔊',
@@ -83,9 +95,23 @@ function viewHome() {
     'mobil-yasam': '📱',
     'adaptor': '🔋',
   };
+  const popular = popularProducts();
   return `
     <div class="hero wrap">
-      <img src="${APP.base}/assets/img/logo.png" alt="Yılmaz Elektronik">
+      <div class="hero-pop" id="heroPop">
+        ${popular.map((p, i) => `<article class="hero-slide${i === 0 ? ' on' : ''}" data-open="${p.id}">
+          <img src="${p.image}" alt="">
+          <div>
+            <div class="brand-l">Popüler · ${p.brand || ''}</div>
+            <h2>${p.name}</h2>
+            <div class="price">${p.price_text}</div>
+            <button class="add" data-add="${p.id}">Sepete at</button>
+          </div>
+        </article>`).join('')}
+        <button type="button" class="hero-nav prev" id="heroPrev" aria-label="Önceki">‹</button>
+        <button type="button" class="hero-nav next" id="heroNext" aria-label="Sonraki">›</button>
+        <div class="hero-dots">${popular.map((_, i) => `<button type="button" class="hero-dot${i === 0 ? ' on' : ''}" data-hero="${i}"></button>`).join('')}</div>
+      </div>
     </div>
     <div class="wrap"><div class="section-title"><h2>Kategoriler</h2></div></div>
     <div class="cat-strip wrap">
@@ -95,7 +121,7 @@ function viewHome() {
       ${['PIONEER','JBL','ALPINE','KENWOOD','SONY','PHOENIX GOLD','HERTZ','FOCAL'].map(b => `<div class="brand">${b}</div>`).join('')}
     </div>
     <div class="wrap">
-      <div class="section-title"><h2>Çok satan ürünler</h2></div>
+      <div class="section-title"><h2>Tüm ürünler</h2></div>
       <div class="grid">${state.products.map(productCard).join('')}</div>
     </div>`;
 }
@@ -280,6 +306,27 @@ function bindView(page) {
     location.hash = '#/giris';
     render();
   });
+  if (!page || page === 'home') startHeroRotate();
+}
+
+let heroTimer = null;
+function startHeroRotate() {
+  if (heroTimer) {
+    clearInterval(heroTimer);
+    heroTimer = null;
+  }
+  const slides = $$('.hero-slide');
+  if (slides.length < 2) return;
+  let i = 0;
+  const show = (n) => {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle('on', k === i));
+    $$('.hero-dot').forEach((d, k) => d.classList.toggle('on', k === i));
+  };
+  $('#heroPrev')?.addEventListener('click', (e) => { e.stopPropagation(); show(i - 1); });
+  $('#heroNext')?.addEventListener('click', (e) => { e.stopPropagation(); show(i + 1); });
+  $$('.hero-dot').forEach((d) => d.addEventListener('click', (e) => { e.stopPropagation(); show(Number(d.dataset.hero)); }));
+  heroTimer = setInterval(() => show(i + 1), 4000);
 }
 
 function bindChrome() {
