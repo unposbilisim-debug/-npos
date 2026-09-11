@@ -2,7 +2,7 @@ const BASE = self.location.pathname.replace(/\/sw\.js$/, '') || '';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open('yilmaz-v1').then((cache) =>
+    caches.open('yilmaz-v2').then((cache) =>
       cache.addAll([
         BASE + '/',
         BASE + '/index.php',
@@ -34,7 +34,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(req).then((res) => {
       const copy = res.clone();
-      caches.open('yilmaz-v1').then((c) => c.put(req, copy)).catch(() => {});
+      caches.open('yilmaz-v2').then((c) => c.put(req, copy)).catch(() => {});
       return res;
     }).catch(() => caches.match(req).then((r) => r || caches.match(BASE + '/')))
   );
