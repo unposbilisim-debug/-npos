@@ -18,14 +18,14 @@ $js = asset('assets/js/app.js');
   <meta name="theme-color" content="#0b0b12">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Yılmaz Elektronik">
+  <meta name="apple-mobile-web-app-title" content="ENS Oto Market">
   <title><?= htmlspecialchars($title) ?> — Bayi sipariş</title>
   <link rel="manifest" href="<?= htmlspecialchars($manifest) ?>">
   <link rel="icon" href="<?= htmlspecialchars(asset('assets/img/favicon.png')) ?>">
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=9">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=10">
 </head>
 <body>
   <div class="topbar"><div class="topbar-inner">
@@ -35,11 +35,11 @@ $js = asset('assets/js/app.js');
   <header class="head">
     <div class="head-inner">
       <a class="logo" href="<?= htmlspecialchars(base_url()) ?>">
-        <span class="logo-badge" aria-hidden="true">Y</span>
-        <span class="logo-mark"><strong>YILMAZ</strong><em>ELEKTRONİK</em></span>
+        <span class="logo-badge" aria-hidden="true">ENS</span>
+        <span class="logo-mark"><strong>ENS OTO MARKET</strong><em>Yılmaz Elektronik iştirakidir</em></span>
       </a>
       <form class="search" id="searchForm">
-        <input id="q" placeholder="Aramak istediğin ürünü yaz, kolayca bul!">
+        <input id="q" placeholder="Ürün veya barkod ara">
         <button type="submit">Ara</button>
       </form>
       <div class="head-actions">
@@ -50,7 +50,7 @@ $js = asset('assets/js/app.js');
   </header>
   <nav class="cats"><div class="nav-inner"></div></nav>
   <main id="view"></main>
-  <footer class="site wrap">Yılmaz Elektronik · Otomotiv elektronik toptan satış · Bayi sipariş sistemi</footer>
+  <footer class="site wrap">ENS Oto Market · Yılmaz Elektronik iştirakidir · Bayi sipariş sistemi</footer>
   <nav class="bottom-nav shop">
     <button data-go="#/home">🏠<br>Vitrin</button>
     <button data-go="#/kategori/arac-ses">📦<br>Ürünler</button>
@@ -66,6 +66,6 @@ $js = asset('assets/js/app.js');
       admin: <?= json_encode($admin) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=9"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=10"></script>
 </body>
 </html>

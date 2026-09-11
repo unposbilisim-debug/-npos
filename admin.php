@@ -17,21 +17,21 @@ $js = asset('assets/js/admin.js');
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0b12">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Yılmaz Yönetim">
+  <meta name="apple-mobile-web-app-title" content="ENS Yönetim">
   <title><?= htmlspecialchars($title) ?></title>
   <link rel="manifest" href="<?= htmlspecialchars($manifest) ?>">
   <link rel="icon" href="<?= htmlspecialchars(asset('assets/img/favicon.png')) ?>">
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=9">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=10">
 </head>
 <body>
   <header class="head">
     <div class="head-inner" style="grid-template-columns:1fr auto">
       <a class="logo" href="<?= htmlspecialchars($home) ?>">
-        <span class="logo-badge" aria-hidden="true">Y</span>
-        <span class="logo-mark"><strong>YILMAZ</strong><em>ELEKTRONİK</em></span>
+        <span class="logo-badge" aria-hidden="true">ENS</span>
+        <span class="logo-mark"><strong>ENS OTO MARKET</strong><em>Yılmaz Elektronik iştirakidir</em></span>
       </a>
       <div class="head-actions">
         <button class="icon-btn" onclick="go('siparis')">Sipariş</button>
