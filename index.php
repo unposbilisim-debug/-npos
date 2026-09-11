@@ -21,11 +21,11 @@ $js = asset('assets/js/app.js');
   <meta name="apple-mobile-web-app-title" content="ENS Oto Market">
   <title><?= htmlspecialchars($title) ?> — Bayi sipariş</title>
   <link rel="manifest" href="<?= htmlspecialchars($manifest) ?>">
-  <link rel="icon" href="<?= htmlspecialchars(asset('assets/img/favicon.png')) ?>">
-  <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>">
+  <link rel="icon" type="image/png" href="<?= htmlspecialchars(asset('assets/img/favicon.png')) ?>?v=12">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>?v=12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=11">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=12">
 </head>
 <body>
   <div class="topbar"><div class="topbar-inner">
@@ -35,7 +35,7 @@ $js = asset('assets/js/app.js');
   <header class="head">
     <div class="head-inner">
       <a class="logo" href="<?= htmlspecialchars(base_url()) ?>">
-        <span class="logo-badge" aria-hidden="true">ENS</span>
+        <img class="logo-img" src="<?= htmlspecialchars(asset('assets/img/logo-ens.png')) ?>?v=12" alt="ENS Oto Market">
         <span class="logo-mark"><strong>ENS OTO MARKET</strong><em>Yılmaz Elektronik iştirakidir</em></span>
       </a>
       <form class="search" id="searchForm">
@@ -66,6 +66,6 @@ $js = asset('assets/js/app.js');
       admin: <?= json_encode($admin) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=11"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=12"></script>
 </body>
 </html>
