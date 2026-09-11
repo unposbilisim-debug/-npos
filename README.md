@@ -5,11 +5,12 @@ Patron kendi telefonundan barkod okutup fotoğraf çekerek ürün ekler.
 Siparişler yönetim ekranına düşer. Ödeme alındıktan sonra onaylanır.
 Online kart ödemesi **bilerek sonra** bırakıldı.
 
-## Adresler
+## Adresler (canlı)
 
-- Vitrin: `https://unposbarkod.com/yilmaz/`
-- Yönetim: `https://unposbarkod.com/yilmaz/admin.php`
-- Plesk’te ayrıca `unposyazilim.com.tr` alanı açıldı. DNS bu isme henüz bakmıyor; isim bağlanınca `http://www.unposyazilim.com.tr/yilmaz/` da aynı siteyi açar.
+- Vitrin: https://unposbarkod.com/yilmaz/
+- Yönetim (telefona ekleyin): https://unposbarkod.com/yilmaz/admin.php
+- Kısa adres: https://yilmaz.unposbarkod.com/
+- Plesk’te `unposyazilim.com.tr` alanı açıldı. DNS bu isme henüz kayıtlı değil; bağlanınca `www.unposyazilim.com.tr/yilmaz/` de çalışır.
 
 ## Girişler (örnek)
 

@@ -30,7 +30,13 @@ $js = asset('assets/js/admin.js');
   <header class="head">
     <div class="head-inner" style="grid-template-columns:1fr auto">
       <a class="logo" href="<?= htmlspecialchars($home) ?>"><img src="<?= htmlspecialchars($icon) ?>" alt=""> Yönetim</a>
-      <button class="icon-btn" id="logout">Çıkış</button>
+      <div class="head-actions">
+        <button class="icon-btn" onclick="go('siparis')">Sipariş</button>
+        <button class="icon-btn" onclick="go('ekle')">Ürün ekle</button>
+        <button class="icon-btn" onclick="go('urunler')">Ürünler</button>
+        <button class="icon-btn" onclick="go('bayiler')">Bayiler</button>
+        <button class="icon-btn" id="logout">Çıkış</button>
+      </div>
     </div>
   </header>
   <main id="view"></main>

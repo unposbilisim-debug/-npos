@@ -25,6 +25,7 @@ function toast(msg) {
 const S = { user: null, cats: [], orders: [], products: [], page: 'siparis' };
 let scanStream = null;
 let scanTimer = null;
+let html5Scanner = null;
 
 function go(page) {
   S.page = page;
@@ -80,7 +81,10 @@ function addView() {
     <p style="color:var(--muted)">Kamerayı ürüne tutun. Barkod okununca varsa ürün dolar, yoksa yeni kayıt açılır.</p>
     <div class="form">
       <button class="btn block" id="scanBtn">📷 Barkodu kameradan oku</button>
-      <div id="scanWrap" class="scan-box hidden"><video id="video" autoplay playsinline></video></div>
+      <div id="scanWrap" class="scan-box hidden">
+        <video id="video" autoplay playsinline></video>
+        <div id="reader"></div>
+      </div>
       <label>Barkod<input id="barcode" placeholder="Elle de yazabilirsiniz" inputmode="numeric"></label>
       <label class="photo-pick" id="photoBox">📷 Ürünün fotoğrafını çekin
         <input id="photo" type="file" accept="image/*" capture="environment" class="hidden">
@@ -180,6 +184,12 @@ function bindAdmin(page) {
       S.editProduct = S.products.find((x) => x.id === Number(el.dataset.edit));
       go('ekle');
     }));
+    $('#pq')?.addEventListener('input', () => {
+      const q = $('#pq').value.toLowerCase();
+      document.querySelectorAll('#plist .card').forEach((el) => {
+        el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
   }
   if (page === 'bayiler') {
     api('dealers').then((d) => {
@@ -262,6 +272,23 @@ async function saveProduct() {
   } catch (e) { toast(e.message); }
 }
 
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if ([...document.scripts].some((s) => s.src.includes('html5-qrcode'))) return resolve();
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function onCode(value) {
+  stopScan();
+  $('#barcode').value = value;
+  lookupBarcode(value);
+}
+
 async function toggleScan() {
   const wrap = $('#scanWrap');
   if (!wrap.classList.contains('hidden')) {
@@ -270,41 +297,51 @@ async function toggleScan() {
   }
   wrap.classList.remove('hidden');
   try {
-    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-    const video = $('#video');
-    video.srcObject = scanStream;
-    await video.play();
     if ('BarcodeDetector' in window) {
+      scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+      const video = $('#video');
+      video.classList.remove('hidden');
+      video.srcObject = scanStream;
+      await video.play();
       const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'qr_code', 'upc_a', 'upc_e', 'code_39'] });
       const tick = async () => {
         try {
           const codes = await det.detect(video);
           if (codes[0]?.rawValue) {
-            stopScan();
-            $('#barcode').value = codes[0].rawValue;
-            lookupBarcode(codes[0].rawValue);
+            onCode(codes[0].rawValue);
             return;
           }
         } catch (_) {}
         scanTimer = requestAnimationFrame(tick);
       };
       tick();
-    } else {
-      toast('Bu tarayıcı otomatik barkod okumuyor. Barkodu elle yazın veya Chrome kullanın.');
+      return;
     }
+    $('#video')?.classList.add('hidden');
+    await loadScript('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js');
+    html5Scanner = new Html5Qrcode('reader');
+    await html5Scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 140 } },
+      (decoded) => onCode(decoded)
+    );
   } catch (e) {
     wrap.classList.add('hidden');
-    toast('Kamera açılamadı. Tarayıcı izni verin.');
+    toast('Kamera açılamadı. Barkodu elle yazabilirsiniz.');
   }
 }
 
-function stopScan() {
+async function stopScan() {
   $('#scanWrap')?.classList.add('hidden');
   if (scanTimer) cancelAnimationFrame(scanTimer);
   scanTimer = null;
   if (scanStream) {
     scanStream.getTracks().forEach((t) => t.stop());
     scanStream = null;
+  }
+  if (html5Scanner) {
+    try { await html5Scanner.stop(); } catch (_) {}
+    html5Scanner = null;
   }
 }
 

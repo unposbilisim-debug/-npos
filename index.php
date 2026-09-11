@@ -52,7 +52,7 @@ $js = asset('assets/js/app.js');
   <nav class="cats"><div class="nav-inner"></div></nav>
   <main id="view"></main>
   <footer class="site wrap">Yılmaz Toptan · B2B bayi sipariş sistemi · Online ödeme sonra eklenecek</footer>
-  <nav class="bottom-nav">
+  <nav class="bottom-nav shop">
     <button data-go="#/home">🏠<br>Vitrin</button>
     <button data-go="#/kategori/yazarkasa-pos">📦<br>Ürünler</button>
     <button data-go="#/sepet">🛒<br>Sepet</button>
