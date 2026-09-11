@@ -6,7 +6,7 @@ $base = BASE_PATH;
 $api = base_url('api.php');
 $admin = base_url('admin.php');
 $manifest = base_url('manifest.webmanifest');
-$logo = asset('assets/img/logo.png');
+$logo = asset('assets/img/wordmark.png');
 $apple = asset('assets/img/apple-touch-icon.png');
 $css = asset('assets/css/app.css');
 $js = asset('assets/js/app.js');
@@ -25,7 +25,7 @@ $js = asset('assets/js/app.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=3">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=4">
 </head>
 <body>
   <div class="topbar"><div class="topbar-inner">
@@ -35,7 +35,7 @@ $js = asset('assets/js/app.js');
   <header class="head">
     <div class="head-inner">
       <a class="logo" href="<?= htmlspecialchars(base_url()) ?>">
-        <img src="<?= htmlspecialchars($logo) ?>" alt="Yılmaz Elektronik">
+        <span class="logo-mark"><b>YILMAZ</b><i>ELEKTRONİK</i></span>
       </a>
       <form class="search" id="searchForm">
         <input id="q" placeholder="Aramak istediğin ürünü yaz, kolayca bul!">
@@ -56,7 +56,7 @@ $js = asset('assets/js/app.js');
     <button data-go="#/sepet">🛒<br>Sepet</button>
     <button data-go="#/hesabim">👤<br>Hesabım</button>
   </nav>
-  <a class="wa" href="https://wa.me/905327837486" target="_blank" rel="noopener">WA</a>
+  <a class="wa" href="https://wa.me/905313512111" target="_blank" rel="noopener">WA</a>
   <div id="toast" class="toast"></div>
   <script>
     window.APP = {
@@ -65,6 +65,6 @@ $js = asset('assets/js/app.js');
       admin: <?= json_encode($admin) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=3"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=4"></script>
 </body>
 </html>

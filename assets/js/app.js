@@ -73,52 +73,25 @@ function productCard(p) {
   </article>`;
 }
 
-function popularProducts() {
-  const byCat = [];
-  const seen = new Set();
-  for (const p of state.products) {
-    if (seen.has(p.category_id)) continue;
-    seen.add(p.category_id);
-    byCat.push(p);
-  }
-  const extra = state.products.filter((p) => !byCat.includes(p));
-  return [...byCat, ...extra].slice(0, 6);
-}
-
 function viewHome() {
-  const icons = {
-    'arac-ses': '🔊',
-    'multimedya': '🖥️',
-    'oto-guvenlik': '📹',
-    'aydinlatma': '💡',
-    'aksesuar': '🔌',
-    'mobil-yasam': '📱',
-    'adaptor': '🔋',
-  };
-  const popular = popularProducts();
+  const campaigns = [
+    { img: APP.base + '/assets/img/banners/kampanya.jpg', href: '#/home' },
+  ];
+  const catImg = (slug) => APP.base + '/assets/img/cats/' + slug + '.png';
   return `
     <div class="hero wrap">
       <div class="hero-pop" id="heroPop">
-        ${popular.map((p, i) => `<article class="hero-slide${i === 0 ? ' on' : ''}" data-open="${p.id}">
-          <img src="${p.image}" alt="">
-          <div>
-            <div class="brand-l">Popüler · ${p.brand || ''}</div>
-            <h2>${p.name}</h2>
-            <div class="price">${p.price_text}</div>
-            <button class="add" data-add="${p.id}">Sepete at</button>
-          </div>
-        </article>`).join('')}
-        <button type="button" class="hero-nav prev" id="heroPrev" aria-label="Önceki">‹</button>
-        <button type="button" class="hero-nav next" id="heroNext" aria-label="Sonraki">›</button>
-        <div class="hero-dots">${popular.map((_, i) => `<button type="button" class="hero-dot${i === 0 ? ' on' : ''}" data-hero="${i}"></button>`).join('')}</div>
+        ${campaigns.map((c, i) => `<a class="hero-slide${i === 0 ? ' on' : ''}" href="${c.href}">
+          <img src="${c.img}" alt="Yılmaz Elektronik kampanya">
+        </a>`).join('')}
       </div>
     </div>
     <div class="wrap"><div class="section-title"><h2>Kategoriler</h2></div></div>
     <div class="cat-strip wrap">
-      ${state.cats.map((c) => `<button class="cat-tile" onclick="location.hash='#/kategori/${c.slug}'"><span>${icons[c.slug] || '📦'}</span>${c.name}</button>`).join('')}
+      ${state.cats.map((c) => `<button class="cat-tile" onclick="location.hash='#/kategori/${c.slug}'"><img src="${catImg(c.slug)}" alt=""><span>${c.name}</span></button>`).join('')}
     </div>
     <div class="brands wrap">
-      ${['PIONEER','JBL','ALPINE','KENWOOD','SONY','PHOENIX GOLD','HERTZ','FOCAL'].map(b => `<div class="brand">${b}</div>`).join('')}
+      ${['PIONEER','JBL','ALPINE','KENWOOD','SONY','PHILIPS','BLAUPUNKT','FOCAL'].map(b => `<div class="brand">${b}</div>`).join('')}
     </div>
     <div class="wrap">
       <div class="section-title"><h2>Tüm ürünler</h2></div>

@@ -24,12 +24,12 @@ $js = asset('assets/js/admin.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=3">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=4">
 </head>
 <body>
   <header class="head">
     <div class="head-inner" style="grid-template-columns:1fr auto">
-      <a class="logo" href="<?= htmlspecialchars($home) ?>"><img src="<?= htmlspecialchars(asset('assets/img/logo.png')) ?>" alt=""> Yönetim</a>
+      <a class="logo" href="<?= htmlspecialchars($home) ?>"><span class="logo-mark"><b>YILMAZ</b><i>ELEKTRONİK</i></span></a>
       <div class="head-actions">
         <button class="icon-btn" onclick="go('siparis')">Sipariş</button>
         <button class="icon-btn" onclick="go('ekle')">Ürün ekle</button>

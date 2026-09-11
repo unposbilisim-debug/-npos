@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 const SITE_NAME = 'Yılmaz Elektronik';
-const SITE_PHONE = '0532 783 74 86';
-const SITE_EMAIL = 'info@unposbarkod.com';
+const SITE_PHONE = '+90 531 351 21 11';
+const SITE_EMAIL = 'info@yilmazelektronik.com';
 const BANK_INFO = 'Ödeme: Havale / EFT — sipariş onaylandıktan sonra kargoya verilir. (Online ödeme sonra eklenecek.)';
 const CATALOG_VERSION = 2;
 
