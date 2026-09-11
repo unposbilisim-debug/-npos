@@ -53,6 +53,6 @@ $js = asset('assets/js/admin.js');
       api: <?= json_encode($api) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=3"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=4"></script>
 </body>
 </html>
