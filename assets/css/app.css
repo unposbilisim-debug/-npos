@@ -143,7 +143,7 @@ button, input, select, textarea { font: inherit; }
   overflow: hidden;
   border-radius: 0;
   background: #0b0b12;
-  height: clamp(200px, 34vw, 520px);
+  aspect-ratio: 1920 / 640;
 }
 .hero-track {
   display: flex;
@@ -285,6 +285,7 @@ footer.site { margin-top: 28px; padding: 24px 0 12px; color: #9aa3b2; font-size:
   .logo-mark em { font-size: 10px; }
   .logo-badge { width: 36px; height: 36px; font-size: 16px; }
   .logo { min-width: 0; }
+  .hero-pop { min-height: 168px; }
   .nav-inner { flex-wrap: wrap; overflow: visible; }
   .nav-inner button { flex: 1 1 25%; font-size: 11px; padding: 8px 4px; }
   .brands { grid-template-columns: 1fr 1fr; }

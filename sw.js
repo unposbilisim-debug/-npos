@@ -7,7 +7,7 @@ self.addEventListener('install', (event) => {
         BASE + '/',
         BASE + '/index.php',
         BASE + '/admin.php',
-        BASE + '/assets/css/app.css?v=6',
+        BASE + '/assets/css/app.css?v=7',
         BASE + '/assets/js/app.js?v=6',
         BASE + '/assets/js/admin.js?v=4',
         BASE + '/assets/img/icon-192.png',
