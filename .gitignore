@@ -1,0 +1,8 @@
+data/*.sqlite
+data/*.sqlite-journal
+assets/uploads/*
+!assets/uploads/.gitkeep
+.DS_Store
+*.log
+.idea/
+.vscode/
