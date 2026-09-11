@@ -417,4 +417,6 @@ footer.site { margin-top: 28px; padding: 24px 0 12px; color: #9aa3b2; font-size:
   body.admin .big-price input { font-size: 22px; padding: 12px; }
   body.admin .add-row { grid-template-columns: 1fr 1fr; }
   body.admin .admin-hero { grid-template-columns: 1fr 1fr; }
+  body.admin .stat { padding: 12px; }
+  body.admin .stat b { font-size: 18px; white-space: nowrap; }
 }
