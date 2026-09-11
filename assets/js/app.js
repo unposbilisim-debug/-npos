@@ -206,6 +206,17 @@ async function render() {
   else html = viewHome();
   $('#view').innerHTML = html;
   $$('.nav-inner [data-cat]').forEach((a) => a.classList.toggle('on', a.dataset.cat && hash.includes(a.dataset.cat)));
+  const catLabel = $('#catMenuLabel');
+  if (catLabel) {
+    if (page === 'kategori') {
+      const c = state.cats.find((x) => x.slug === id);
+      catLabel.textContent = c ? c.name : 'Kategoriler';
+    } else {
+      catLabel.textContent = 'Kategoriler';
+    }
+  }
+  $('#catNav')?.classList.remove('open');
+  $('#catMenuBtn')?.setAttribute('aria-expanded', 'false');
   bindView(page);
   if (page === 'hesabim' && state.user?.role === 'dealer') {
     try {
@@ -327,6 +338,25 @@ function bindChrome() {
   });
   $('#cartBtn').onclick = () => location.hash = '#/sepet';
   $$('.bottom-nav [data-go]').forEach((b) => b.addEventListener('click', () => { location.hash = b.dataset.go; }));
+  const catNav = $('#catNav');
+  const catBtn = $('#catMenuBtn');
+  catBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = catNav.classList.toggle('open');
+    catBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  $('.nav-inner')?.addEventListener('click', (e) => {
+    if (e.target.closest('button')) {
+      catNav?.classList.remove('open');
+      catBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (catNav && !catNav.contains(e.target)) {
+      catNav.classList.remove('open');
+      catBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
 }
 
 async function boot() {

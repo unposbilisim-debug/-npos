@@ -25,7 +25,7 @@ $js = asset('assets/js/app.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>?v=12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=12">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=14">
 </head>
 <body>
   <div class="topbar"><div class="topbar-inner">
@@ -48,7 +48,13 @@ $js = asset('assets/js/app.js');
       </div>
     </div>
   </header>
-  <nav class="cats"><div class="nav-inner"></div></nav>
+  <nav class="cats" id="catNav">
+    <button type="button" class="cat-menu-btn" id="catMenuBtn" aria-expanded="false" aria-controls="catList">
+      <span id="catMenuLabel">Kategoriler</span>
+      <span class="cat-chevron" aria-hidden="true">▾</span>
+    </button>
+    <div class="nav-inner" id="catList"></div>
+  </nav>
   <main id="view"></main>
   <footer class="site wrap">ENS Oto Market · Yılmaz Elektronik iştirakidir · Bayi sipariş sistemi</footer>
   <nav class="bottom-nav shop">
@@ -66,6 +72,6 @@ $js = asset('assets/js/app.js');
       admin: <?= json_encode($admin) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=13"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=14"></script>
 </body>
 </html>
