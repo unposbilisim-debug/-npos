@@ -75,9 +75,10 @@ function productCard(p) {
 
 function viewHome() {
   const campaigns = [
-    { img: APP.base + '/assets/img/banners/kampanya.jpg' },
-    { img: APP.base + '/assets/img/banners/kampanya2.jpg' },
-    { img: APP.base + '/assets/img/banners/kampanya3.jpg' },
+    { img: APP.base + '/assets/img/banners/kampanya.jpg?v=11' },
+    { img: APP.base + '/assets/img/banners/kampanya2.jpg?v=11' },
+    { img: APP.base + '/assets/img/banners/kampanya3.jpg?v=11' },
+    { img: APP.base + '/assets/img/banners/kampanya4.jpg?v=11' },
   ];
   const slides = campaigns.concat(campaigns[0]);
   const catImg = (slug) => APP.base + '/assets/img/cats/' + slug + '.png';
@@ -86,7 +87,7 @@ function viewHome() {
       <div class="hero-pop" id="heroPop">
         <div class="hero-track" id="heroTrack">
           ${slides.map((c) => `<div class="hero-slide">
-            <img src="${c.img}" alt="Yılmaz Elektronik kampanya">
+            <img src="${c.img}" alt="ENS Oto Market kampanya">
           </div>`).join('')}
         </div>
       </div>
