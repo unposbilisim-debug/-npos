@@ -1,0 +1,15 @@
+{
+  "name": "ENS Oto Market",
+  "short_name": "ENS",
+  "description": "Yılmaz Elektronik iştirakidir — otomotiv elektronik toptan satış, bayi sipariş",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0b12",
+  "theme_color": "#0b0b12",
+  "lang": "tr",
+  "icons": [
+    { "src": "assets/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
