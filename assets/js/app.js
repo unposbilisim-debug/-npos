@@ -39,10 +39,59 @@ function toast(msg) {
   t.style.display = 'block';
   setTimeout(() => { t.style.display = 'none'; }, 2200);
 }
+function canOrder() {
+  return state.user?.role === 'dealer' && Number(state.user.approved) === 1;
+}
+function isPendingDealer() {
+  return state.user?.role === 'dealer' && Number(state.user.approved) !== 1;
+}
+function pendingBanner() {
+  if (!isPendingDealer()) return '';
+  return `<div class="wrap"><div class="pending-banner">Hesabınız onay bekliyor. Onaylandıktan sonra bayi fiyatlarını görür ve sipariş verebilirsiniz.</div></div>`;
+}
+function priceBlock(p) {
+  if (p.is_dealer_price) {
+    const save = p.save > 0 ? `<div class="price-save">Kazancınız ${p.save_text}</div>` : '';
+    return `<div class="price-block">
+      <div class="price-list">${p.list_price_text}</div>
+      <div class="price-tag">Bayi fiyatı</div>
+      <div class="price">${p.price_text}</div>
+      ${save}
+    </div>`;
+  }
+  const hint = isPendingDealer()
+    ? 'Onay sonrası bayi fiyatı açılır'
+    : 'Bayi girişi yapın, özel fiyat görün';
+  return `<div class="price-block">
+    <div class="price">${p.price_text}</div>
+    <div class="price-hint">${hint}</div>
+  </div>`;
+}
+function syncCartPrices() {
+  state.cart = state.cart.map((i) => {
+    const p = state.products.find((x) => x.id === i.id);
+    return p ? { ...i, price: p.price, name: p.name, image: p.image } : i;
+  });
+  saveCart();
+}
+async function loadCatalog() {
+  const d = await api('boot');
+  state.user = d.user;
+  state.cats = d.categories;
+  state.products = d.products;
+  APP.bank = d.site.bank;
+  syncCartPrices();
+  setNav();
+}
+
 function addCart(p, qty = 1) {
   if (!state.user || state.user.role !== 'dealer') {
     toast('Sipariş için bayi girişi yapın');
     location.hash = '#/giris';
+    return;
+  }
+  if (!canOrder()) {
+    toast('Hesabınız onaylandıktan sonra sipariş verebilirsiniz');
     return;
   }
   const row = state.cart.find((i) => i.id === p.id);
@@ -62,13 +111,18 @@ function setNav() {
 }
 
 function productCard(p) {
+  const btn = canOrder()
+    ? `<button class="add" data-add="${p.id}">Sepete at</button>`
+    : (isPendingDealer()
+      ? `<button class="add" type="button" disabled>Onay bekleniyor</button>`
+      : `<button class="add" data-add="${p.id}">Sepete at</button>`);
   return `<article class="card" data-open="${p.id}">
     <div class="ph"><img src="${p.image}" alt=""></div>
     <div class="body">
       <div class="brand-l">${p.brand || ''}</div>
       <h3>${p.name}</h3>
-      <div class="price">${p.price_text}</div>
-      <button class="add" data-add="${p.id}">Sepete at</button>
+      ${priceBlock(p)}
+      ${btn}
     </div>
   </article>`;
 }
@@ -82,6 +136,7 @@ function viewHome() {
   const slides = campaigns.concat(campaigns[0]);
   const catImg = (slug) => APP.base + '/assets/img/cats/' + slug + '.png';
   return `
+    ${pendingBanner()}
     <section class="hero wrap" aria-label="Kampanyalar">
       <div class="hero-pop" id="heroPop">
         <div class="hero-track" id="heroTrack">
@@ -113,7 +168,7 @@ function viewList(catId, q) {
     list = list.filter((p) => (p.name + p.brand + p.barcode).toLowerCase().includes(s));
   }
   const title = cat ? cat.name : (q ? `Arama: ${q}` : 'Tüm ürünler');
-  return `<div class="wrap" style="padding-top:16px">
+  return `${pendingBanner()}<div class="wrap" style="padding-top:16px">
     <div class="section-title"><h2>${title}</h2><span>${list.length} ürün</span></div>
     <div class="grid">${list.map(productCard).join('') || '<div class="empty">Ürün yok</div>'}</div>
   </div>`;
@@ -122,21 +177,24 @@ function viewList(catId, q) {
 function viewProduct(id) {
   const p = state.products.find((x) => x.id === Number(id));
   if (!p) return `<div class="empty">Ürün bulunamadı</div>`;
-  return `<div class="wrap" style="padding-top:16px"><div class="detail">
+  return `${pendingBanner()}<div class="wrap" style="padding-top:16px"><div class="detail">
     <img src="${p.image}" alt="">
     <div>
       <div class="brand-l">${p.brand || ''}</div>
       <h1>${p.name}</h1>
       <p style="color:var(--muted)">${p.description || ''}</p>
       <p>Barkod: <b>${p.barcode || '-'}</b> · Stok: <b>${p.stock}</b></p>
-      <p class="price" style="font-size:28px">${p.price_text}</p>
+      ${priceBlock(p)}
       <div class="qty"><button data-q="-">−</button><input id="qty" value="1"><button data-q="+">+</button></div>
-      <p><button class="btn" id="addOne">Sepete ekle ve sipariş ver</button></p>
+      <p><button class="btn" id="addOne"${canOrder() || !state.user || state.user.role !== 'dealer' ? '' : ' disabled'}>${isPendingDealer() ? 'Onay sonrası sipariş' : 'Sepete ekle ve sipariş ver'}</button></p>
     </div>
   </div></div>`;
 }
 
 function viewCart() {
+  if (isPendingDealer()) {
+    return pendingBanner() + `<div class="empty">Onay sonrası sepete ürün ekleyebilirsiniz.</div>`;
+  }
   const total = state.cart.reduce((s, i) => s + i.price * i.qty, 0);
   if (!state.cart.length) return `<div class="empty">Sepetiniz boş</div>`;
   return `<div class="wrap" style="padding-top:16px">
@@ -152,7 +210,7 @@ function viewCart() {
       <div>Toplam: <b style="font-size:22px">${money(total)}</b></div>
       <p class="hint">${APP.bank || ''}</p>
       <label>Sipariş notu<textarea id="note" placeholder="Teslimat veya fatura notu"></textarea></label>
-      <button class="btn block" id="place">Siparişi gönder (ödeme sonra)</button>
+      <button class="btn block" id="place"${canOrder() ? '' : ' disabled'}>Siparişi gönder (ödeme sonra)</button>
     </div>
   </div>`;
 }
@@ -173,6 +231,7 @@ function viewAuth() {
       <label>Telefon<input id="rphone"></label>
       <label>Şifre<input id="rpass" type="password"></label>
       <button class="btn ghost block" id="doReg">Kayıt ol</button>
+      <div class="hint">Kayıt sonrası vitrin fiyatlarını görürsünüz. Bayi fiyatı ve sipariş, patron onayından sonra açılır.</div>
     </div>
   </div>`;
 }
@@ -181,9 +240,11 @@ function viewAccount() {
   const u = state.user;
   if (!u) return viewAuth();
   return `<div class="wrap" style="padding-top:16px">
+    ${pendingBanner()}
     <div class="auth" style="margin:0">
       <h2>${u.company || u.name}</h2>
       <p>${u.phone} · ${u.city || ''}</p>
+      ${u.role === 'dealer' ? `<p class="hint">${Number(u.approved) === 1 ? 'Onaylı bayi — özel fiyatlar açık.' : 'Onay bekleniyor — bayi fiyatları henüz kapalı.'}</p>` : ''}
       ${u.role === 'admin' ? `<p><a class="btn" href="${APP.admin}">Yönetim paneli</a></p>` : ''}
       <button class="btn ghost" id="out">Çıkış</button>
     </div>
@@ -272,26 +333,29 @@ function bindView(page) {
   $('#doLogin')?.addEventListener('click', async () => {
     try {
       const d = await api('login', { body: { phone: $('#phone').value, password: $('#pass').value } });
-      state.user = d.user;
-      setNav();
-      location.hash = d.user.role === 'admin' ? '' : '#/home';
-      if (d.user.role === 'admin') location.href = APP.admin;
-      else render();
+      if (d.user.role === 'admin') {
+        location.href = APP.admin;
+        return;
+      }
+      await loadCatalog();
+      location.hash = '#/home';
+      render();
     } catch (e) { toast(e.message); }
   });
   $('#doReg')?.addEventListener('click', async () => {
     try {
-      const d = await api('register', { body: { name: $('#rname').value, company: $('#rcompany').value, city: $('#rcity').value, phone: $('#rphone').value, password: $('#rpass').value } });
-      state.user = d.user;
-      setNav();
+      await api('register', { body: { name: $('#rname').value, company: $('#rcompany').value, city: $('#rcity').value, phone: $('#rphone').value, password: $('#rpass').value } });
+      await loadCatalog();
+      toast('Kayıt alındı. Onay sonrası bayi fiyatı açılır.');
       location.hash = '#/home';
       render();
     } catch (e) { toast(e.message); }
   });
   $('#out')?.addEventListener('click', async () => {
     await api('logout', { method: 'POST', body: {} });
-    state.user = null;
-    setNav();
+    state.cart = [];
+    saveCart();
+    await loadCatalog();
     location.hash = '#/giris';
     render();
   });
@@ -362,11 +426,7 @@ function bindChrome() {
 async function boot() {
   bindChrome();
   saveCart();
-  const d = await api('boot');
-  state.user = d.user;
-  state.cats = d.categories;
-  state.products = d.products;
-  APP.bank = d.site.bank;
+  await loadCatalog();
   const nav = $('.nav-inner');
   nav.innerHTML = `<button data-cat="" onclick="location.hash='#/home'">Tüm Ürünler</button>` +
     state.cats.map((c) => `<button data-cat="${c.slug}" onclick="location.hash='#/kategori/${c.slug}'">${c.name}</button>`).join('');

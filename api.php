@@ -27,6 +27,7 @@ try {
         'order_status' => action_order_status(),
         'dealers' => action_dealers(),
         'dealer_save' => action_dealer_save(),
+        'dealer_approve' => action_dealer_approve(),
         'dealer_orders' => action_dealer_orders(),
         'category_save' => action_category_save(),
         default => json_out(['ok' => false, 'error' => 'Bilinmeyen istek.'], 404),
@@ -107,7 +108,7 @@ function action_register(): void
     if ($st->fetch()) {
         json_out(['ok' => false, 'error' => 'Bu telefon zaten kayıtlı.'], 400);
     }
-    db()->prepare('INSERT INTO users (role,name,company,phone,password_hash,city,active,created_at) VALUES (?,?,?,?,?,?,1,?)')
+    db()->prepare('INSERT INTO users (role,name,company,phone,password_hash,city,active,approved,created_at) VALUES (?,?,?,?,?,?,1,0,?)')
         ->execute(['dealer', $name, $company, $phone, password_hash($pass, PASSWORD_DEFAULT), $city, date('c')]);
     start_session();
     $_SESSION['uid'] = (int) db()->lastInsertId();
@@ -182,16 +183,16 @@ function action_product_save(): void
     $brand = trim((string) ($_POST['brand'] ?? ''));
     $description = trim((string) ($_POST['description'] ?? ''));
     $categoryId = (int) ($_POST['category_id'] ?? 0) ?: null;
-    $raw = trim((string) ($_POST['price'] ?? '0'));
-    if (str_contains($raw, ',') && str_contains($raw, '.')) {
-        $raw = str_replace('.', '', $raw);
-        $raw = str_replace(',', '.', $raw);
-    } elseif (str_contains($raw, ',')) {
-        $raw = str_replace(',', '.', $raw);
-    }
-    $price = (int) round(((float) $raw) * 100);
+    $price = parse_try_to_kurus($_POST['price'] ?? '0');
     if (isset($_POST['price_kurus'])) {
         $price = (int) $_POST['price_kurus'];
+    }
+    $listPrice = parse_try_to_kurus($_POST['list_price'] ?? '');
+    if (isset($_POST['list_price_kurus'])) {
+        $listPrice = (int) $_POST['list_price_kurus'];
+    }
+    if ($listPrice <= 0) {
+        $listPrice = (int) round($price * 1.2);
     }
     $stock = (int) ($_POST['stock'] ?? 0);
     $active = isset($_POST['active']) ? (int) $_POST['active'] : 1;
@@ -207,11 +208,11 @@ function action_product_save(): void
             json_out(['ok' => false, 'error' => 'Ürün yok.'], 404);
         }
         $img = $image ?: $old['image'];
-        db()->prepare('UPDATE products SET barcode=?, name=?, brand=?, description=?, category_id=?, price=?, stock=?, image=?, active=? WHERE id=?')
-            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $stock, $img, $active, $id]);
+        db()->prepare('UPDATE products SET barcode=?, name=?, brand=?, description=?, category_id=?, price=?, list_price=?, stock=?, image=?, active=? WHERE id=?')
+            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $listPrice, $stock, $img, $active, $id]);
     } else {
-        db()->prepare('INSERT INTO products (barcode,name,brand,description,category_id,price,stock,image,active,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $stock, $image ?? '', $active, date('c')]);
+        db()->prepare('INSERT INTO products (barcode,name,brand,description,category_id,price,list_price,stock,image,active,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $listPrice, $stock, $image ?? '', $active, date('c')]);
         $id = (int) db()->lastInsertId();
     }
     $st = db()->prepare('SELECT * FROM products WHERE id = ?');
@@ -230,6 +231,9 @@ function action_product_delete(): void
 function action_order_create(): void
 {
     $u = require_user('dealer');
+    if (!is_approved_dealer($u)) {
+        json_out(['ok' => false, 'error' => 'Hesabınız onaylandıktan sonra sipariş verebilirsiniz.'], 403);
+    }
     $in = $_POST ?: json_input();
     $items = $in['items'] ?? [];
     $note = trim((string) ($in['note'] ?? ''));
@@ -357,7 +361,7 @@ function action_order_status(): void
 function action_dealers(): void
 {
     require_user('admin');
-    $rows = db()->query("SELECT id, name, company, phone, city, active, created_at FROM users WHERE role = 'dealer' ORDER BY id DESC")->fetchAll();
+    $rows = db()->query("SELECT id, name, company, phone, city, active, approved, created_at FROM users WHERE role = 'dealer' ORDER BY id DESC")->fetchAll();
     json_out(['ok' => true, 'dealers' => $rows]);
 }
 
@@ -392,17 +396,35 @@ function action_dealer_save(): void
         if ($exists->fetch()) {
             json_out(['ok' => false, 'error' => 'Bu telefon zaten kayıtlı.'], 400);
         }
-        db()->prepare('INSERT INTO users (role,name,company,phone,password_hash,city,active,created_at) VALUES ("dealer",?,?,?,?,?,?,?)')
+        db()->prepare('INSERT INTO users (role,name,company,phone,password_hash,city,active,approved,created_at) VALUES ("dealer",?,?,?,?,?,?,1,?)')
             ->execute([$name, $company, $phone, password_hash($pass, PASSWORD_DEFAULT), $city, $active, date('c')]);
     }
     json_out(['ok' => true]);
+}
+
+function action_dealer_approve(): void
+{
+    require_user('admin');
+    $in = $_POST ?: json_input();
+    $id = (int) ($in['id'] ?? 0);
+    $approved = isset($in['approved']) ? ((int) $in['approved'] ? 1 : 0) : 1;
+    if ($id <= 0) {
+        json_out(['ok' => false, 'error' => 'Bayi seçin.'], 400);
+    }
+    $chk = db()->prepare('SELECT id FROM users WHERE id = ? AND role = "dealer"');
+    $chk->execute([$id]);
+    if (!$chk->fetch()) {
+        json_out(['ok' => false, 'error' => 'Bayi bulunamadı.'], 404);
+    }
+    db()->prepare('UPDATE users SET approved = ? WHERE id = ? AND role = "dealer"')->execute([$approved, $id]);
+    json_out(['ok' => true, 'approved' => $approved]);
 }
 
 function action_dealer_orders(): void
 {
     require_user('admin');
     $id = (int) ($_GET['id'] ?? 0);
-    $st = db()->prepare("SELECT id, name, company, phone, city, active, created_at FROM users WHERE id = ? AND role = 'dealer'");
+    $st = db()->prepare("SELECT id, name, company, phone, city, active, approved, created_at FROM users WHERE id = ? AND role = 'dealer'");
     $st->execute([$id]);
     $dealer = $st->fetch();
     if (!$dealer) {

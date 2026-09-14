@@ -113,7 +113,10 @@ function addView() {
         <label>Yeni kategori adı<input id="newCatName" type="text" placeholder="Örn. Sis Lambası"></label>
         <button type="button" class="btn" id="saveCat">Kaydet</button>
       </div>
-      <label class="big-price">Bayi fiyatı (₺)<input id="price" type="text" inputmode="decimal" placeholder="0,00"></label>
+      <div class="add-row">
+        <label class="big-price">Bayi fiyatı (₺)<input id="price" type="text" inputmode="decimal" placeholder="0,00"></label>
+        <label class="big-price">Vitrin fiyatı (₺)<input id="listPrice" type="text" inputmode="decimal" placeholder="0,00"></label>
+      </div>
       <label>Açıklama<textarea id="desc" rows="3"></textarea></label>
       <input type="hidden" id="pid" value="">
       <button class="btn block" id="save">Ürünü kaydet</button>
@@ -127,7 +130,7 @@ function productsView() {
     <input id="pq" placeholder="Ürün ara..." style="margin-bottom:10px">
     <div class="grid" id="plist">${S.products.map(p => `<article class="card" data-edit="${p.id}">
       <div class="ph"><img src="${p.image}"></div>
-      <div class="body"><div class="brand-l">${p.brand || ''}</div><h3>${p.name}</h3><div class="price">${p.price_text}</div></div>
+      <div class="body"><div class="brand-l">${p.brand || ''}</div><h3>${p.name}</h3><div class="price">${p.dealer_price_text || p.price_text}</div><div class="price-list">Vitrin ${p.list_price_text}</div></div>
     </article>`).join('')}</div>
   </div>`;
 }
@@ -239,14 +242,28 @@ function bindAdmin(page, id) {
         list.innerHTML = '<div class="empty">Bayi yok</div>';
         return;
       }
-      list.innerHTML = d.dealers.map((x) => `<div class="order dealer-card" data-dealer="${x.id}">
+      list.innerHTML = d.dealers.map((x) => {
+        const ok = Number(x.approved) === 1;
+        return `<div class="order dealer-card" data-dealer="${x.id}">
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
           <div><b>${x.company || x.name}</b><div style="font-size:13px;color:var(--muted)">${x.phone}${x.city ? ' · ' + x.city : ''}</div></div>
-          <span class="pill approved">Geçmiş</span>
+          <span class="pill ${ok ? 'approved' : 'pending'}">${ok ? 'Onaylı' : 'Onay bekliyor'}</span>
         </div>
-      </div>`).join('');
+        ${ok ? '' : `<div style="margin-top:10px"><button type="button" class="btn ok" data-approve="${x.id}">Onayla</button></div>`}
+      </div>`;
+      }).join('');
       list.querySelectorAll('[data-dealer]').forEach((el) => {
         el.addEventListener('click', () => go('bayi', el.dataset.dealer));
+      });
+      list.querySelectorAll('[data-approve]').forEach((b) => {
+        b.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          try {
+            await api('dealer_approve', { body: { id: Number(b.dataset.approve), approved: 1 } });
+            toast('Bayi onaylandı');
+            render();
+          } catch (err) { toast(err.message); }
+        });
       });
     }).catch((e) => { $('#dlist').innerHTML = `<div class="empty">${e.message}</div>`; });
     $('#dsave').onclick = async () => {
@@ -272,6 +289,8 @@ async function loadDealerHistory(id) {
     head.className = 'dealer-head';
     head.innerHTML = `<h2>${x.company || x.name}</h2>
       <p>${x.name} · ${x.phone}${x.city ? ' · ' + x.city : ''}</p>
+      <p><span class="pill ${Number(x.approved) === 1 ? 'approved' : 'pending'}">${Number(x.approved) === 1 ? 'Onaylı bayi' : 'Onay bekliyor'}</span></p>
+      ${Number(x.approved) === 1 ? '' : `<p><button type="button" class="btn ok" id="approveDealer">Bayiyi onayla</button></p>`}
       <div class="admin-hero">
         <div class="stat"><span>Sipariş</span><b>${d.order_count}</b></div>
         <div class="stat"><span>Toplam alışveriş</span><b>${d.total_spent_text}</b></div>
@@ -280,6 +299,13 @@ async function loadDealerHistory(id) {
       ? d.orders.map(orderCard).join('')
       : '<div class="empty">Bu bayinin henüz siparişi yok</div>';
     bindStatusButtons();
+    $('#approveDealer')?.addEventListener('click', async () => {
+      try {
+        await api('dealer_approve', { body: { id: Number(id), approved: 1 } });
+        toast('Bayi onaylandı');
+        loadDealerHistory(id);
+      } catch (err) { toast(err.message); }
+    });
   } catch (e) {
     $('#dealerHead').textContent = e.message;
   }
@@ -292,7 +318,10 @@ function fillProduct(p) {
   $('#name').value = p.name;
   $('#brand').value = p.brand || '';
   $('#cat').value = p.category_id || '';
-  $('#price').value = (p.price / 100).toString().replace('.', ',');
+  $('#price').value = ((p.dealer_price ?? p.price) / 100).toString().replace('.', ',');
+  if ($('#listPrice')) {
+    $('#listPrice').value = ((p.list_price || 0) / 100).toString().replace('.', ',');
+  }
   $('#stock').value = p.stock;
   $('#desc').value = p.description || '';
   if (p.image) {
@@ -363,6 +392,8 @@ async function saveProduct() {
   fd.append('category_id', $('#cat').value);
   const raw = $('#price').value.replace(/\./g, '').replace(',', '.');
   fd.append('price', raw);
+  const listRaw = ($('#listPrice')?.value || '').replace(/\./g, '').replace(',', '.');
+  fd.append('list_price', listRaw);
   fd.append('stock', $('#stock').value);
   fd.append('description', $('#desc').value);
   fd.append('active', '1');

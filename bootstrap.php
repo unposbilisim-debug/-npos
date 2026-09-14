@@ -71,6 +71,7 @@ function db(): PDO
         seed_data($pdo);
     } else {
         maybe_upgrade_catalog($pdo);
+        maybe_upgrade_pricing($pdo);
     }
     return $pdo;
 }
@@ -87,6 +88,7 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,
   city TEXT DEFAULT '',
   active INTEGER NOT NULL DEFAULT 1,
+  approved INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL
 );
 CREATE TABLE categories (
@@ -103,6 +105,7 @@ CREATE TABLE products (
   description TEXT DEFAULT '',
   category_id INTEGER,
   price INTEGER NOT NULL DEFAULT 0,
+  list_price INTEGER NOT NULL DEFAULT 0,
   stock INTEGER NOT NULL DEFAULT 0,
   image TEXT DEFAULT '',
   active INTEGER NOT NULL DEFAULT 1,
@@ -138,7 +141,7 @@ SQL);
 function seed_data(PDO $pdo): void
 {
     $now = date('c');
-    $admin = $pdo->prepare('INSERT INTO users (role,name,company,phone,password_hash,city,active,created_at) VALUES (?,?,?,?,?,?,1,?)');
+    $admin = $pdo->prepare('INSERT INTO users (role,name,company,phone,password_hash,city,active,approved,created_at) VALUES (?,?,?,?,?,?,1,1,?)');
     $admin->execute(['admin', 'Patron', 'Yılmaz Elektronik', '05550000000', password_hash('Patron123!', PASSWORD_DEFAULT), 'İstanbul', $now]);
     $admin->execute(['dealer', 'Ahmet Yılmaz', 'Yılmaz Oto Ses', '05551234567', password_hash('Bayi123!', PASSWORD_DEFAULT), 'Ankara', $now]);
     $admin->execute(['dealer', 'Mehmet Kaya', 'Kaya Oto Aksesuar', '05559876543', password_hash('Bayi123!', PASSWORD_DEFAULT), 'İzmir', $now]);
@@ -157,6 +160,29 @@ function maybe_upgrade_catalog(PDO $pdo): void
     $pdo->exec('DELETE FROM categories');
     $pdo->prepare('UPDATE users SET company = ? WHERE role = ?')->execute(['Yılmaz Elektronik', 'admin']);
     seed_catalog($pdo, date('c'));
+}
+
+function table_has_column(PDO $pdo, string $table, string $column): bool
+{
+    $st = $pdo->query('PRAGMA table_info(' . $table . ')');
+    foreach ($st as $row) {
+        if (strcasecmp((string) $row['name'], $column) === 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function maybe_upgrade_pricing(PDO $pdo): void
+{
+    if (!table_has_column($pdo, 'products', 'list_price')) {
+        $pdo->exec('ALTER TABLE products ADD COLUMN list_price INTEGER NOT NULL DEFAULT 0');
+        $pdo->exec('UPDATE products SET list_price = CAST(ROUND(price * 1.2) AS INTEGER) WHERE list_price = 0');
+    }
+    if (!table_has_column($pdo, 'users', 'approved')) {
+        $pdo->exec('ALTER TABLE users ADD COLUMN approved INTEGER NOT NULL DEFAULT 1');
+    }
+    $pdo->exec('UPDATE products SET list_price = CAST(ROUND(price * 1.2) AS INTEGER) WHERE list_price = 0 AND price > 0');
 }
 
 function seed_catalog(PDO $pdo, string $now): void
@@ -193,10 +219,12 @@ function seed_catalog(PDO $pdo, string $now): void
         ['8691110000151', 'Araç İçi Telefon Tutucu', 'Yılmaz', 'Havalandırma ızgarası telefon tutucu.', 6, 12000, 70, 'assets/img/products/p15.png'],
         ['8691110000168', 'Tweeter Set 300W', 'Pioneer', 'Harici tiz hoparlör. A sütunu montaj.', 1, 75000, 24, 'assets/img/products/p16.png'],
     ];
-    $insP = $pdo->prepare('INSERT INTO products (barcode,name,brand,description,category_id,price,stock,image,active,created_at) VALUES (?,?,?,?,?,?,?,?,1,?)');
+    $insP = $pdo->prepare('INSERT INTO products (barcode,name,brand,description,category_id,price,list_price,stock,image,active,created_at) VALUES (?,?,?,?,?,?,?,?,?,1,?)');
     foreach ($products as $p) {
-        $p[] = $now;
-        $insP->execute($p);
+        $dealer = (int) $p[5];
+        $list = (int) round($dealer * 1.2);
+        $row = [$p[0], $p[1], $p[2], $p[3], $p[4], $dealer, $list, $p[6], $p[7], $now];
+        $insP->execute($row);
     }
 
     $pdo->prepare('INSERT INTO orders (dealer_id,status,note,total,created_at) VALUES (2,?,?,?,?)')
@@ -229,13 +257,38 @@ function current_user(): ?array
     if (!$id) {
         return null;
     }
-    $st = db()->prepare('SELECT id, role, name, company, phone, city, active FROM users WHERE id = ?');
+    $st = db()->prepare('SELECT id, role, name, company, phone, city, active, approved FROM users WHERE id = ?');
     $st->execute([(int) $id]);
     $u = $st->fetch();
     if (!$u || !(int) $u['active']) {
         return null;
     }
+    $u['id'] = (int) $u['id'];
+    $u['active'] = (int) $u['active'];
+    $u['approved'] = (int) ($u['approved'] ?? 1);
     return $u;
+}
+
+function is_approved_dealer(?array $user): bool
+{
+    return $user
+        && ($user['role'] ?? '') === 'dealer'
+        && (int) ($user['approved'] ?? 0) === 1;
+}
+
+function parse_try_to_kurus($value): int
+{
+    $raw = trim((string) $value);
+    if ($raw === '') {
+        return 0;
+    }
+    if (str_contains($raw, ',') && str_contains($raw, '.')) {
+        $raw = str_replace('.', '', $raw);
+        $raw = str_replace(',', '.', $raw);
+    } elseif (str_contains($raw, ',')) {
+        $raw = str_replace(',', '.', $raw);
+    }
+    return (int) round(((float) $raw) * 100);
 }
 
 function require_user(?string $role = null): array
@@ -322,19 +375,44 @@ function save_upload(?array $file): ?string
     return 'assets/uploads/' . $name;
 }
 
-function public_product(array $p): array
+function public_product(array $p, ?array $viewer = null): array
 {
-    return [
+    if (func_num_args() < 2) {
+        $viewer = current_user();
+    }
+    $dealerPrice = (int) ($p['price'] ?? 0);
+    $listPrice = (int) ($p['list_price'] ?? 0);
+    if ($listPrice <= 0) {
+        $listPrice = (int) round($dealerPrice * 1.2);
+    }
+    $isAdmin = ($viewer['role'] ?? '') === 'admin';
+    $showDealer = $isAdmin || is_approved_dealer($viewer);
+    $display = $showDealer ? $dealerPrice : $listPrice;
+    $out = [
         'id' => (int) $p['id'],
         'barcode' => $p['barcode'],
         'name' => $p['name'],
         'brand' => $p['brand'],
         'description' => $p['description'],
-        'category_id' => (int) $p['category_id'],
-        'price' => (int) $p['price'],
-        'price_text' => money_try((int) $p['price']),
+        'category_id' => (int) ($p['category_id'] ?? 0),
+        'price' => $display,
+        'price_text' => money_try($display),
+        'list_price' => $listPrice,
+        'list_price_text' => money_try($listPrice),
+        'is_dealer_price' => $showDealer,
         'stock' => (int) $p['stock'],
-        'image' => product_image_url((string) $p['image']),
-        'active' => (int) $p['active'],
+        'image' => product_image_url((string) ($p['image'] ?? '')),
+        'active' => (int) ($p['active'] ?? 1),
     ];
+    if ($showDealer) {
+        $out['dealer_price'] = $dealerPrice;
+        $out['dealer_price_text'] = money_try($dealerPrice);
+        $out['save'] = max(0, $listPrice - $dealerPrice);
+        $out['save_text'] = money_try($out['save']);
+    }
+    if ($isAdmin) {
+        $out['price'] = $dealerPrice;
+        $out['price_text'] = money_try($dealerPrice);
+    }
+    return $out;
 }

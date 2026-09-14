@@ -196,6 +196,15 @@ button, input, select, textarea { font: inherit; }
 .card .brand-l { font-size: 11px; color: var(--blue); font-weight: 800; text-transform: uppercase; }
 .card h3 { margin: 0; font-size: 15px; line-height: 1.3; min-height: 40px; }
 .card .price { font-size: 18px; font-weight: 800; color: var(--navy); }
+.price-block { display: grid; gap: 2px; }
+.price-list { color: var(--muted); text-decoration: line-through; font-size: 13px; font-weight: 700; }
+.price-tag { font-size: 11px; font-weight: 800; color: var(--ok); letter-spacing: .03em; text-transform: uppercase; }
+.price-hint { font-size: 12px; color: var(--muted); font-weight: 600; line-height: 1.3; }
+.price-save { font-size: 12px; color: var(--ok); font-weight: 800; }
+.pending-banner {
+  background: #fff4e5; border: 1px solid #f0c36d; color: #7a4d00;
+  padding: 12px 14px; border-radius: 12px; margin: 12px 0 4px; font-weight: 700; font-size: 14px;
+}
 .card .add {
   margin-top: auto; border: 0; background: var(--blue); color: #fff; border-radius: 10px;
   padding: 10px; cursor: pointer; font-weight: 700;
