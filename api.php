@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/accounting.php';
 
 header('Cache-Control: no-store');
 start_session();
@@ -23,13 +24,20 @@ try {
         'product_delete' => action_product_delete(),
         'order_create' => action_order_create(),
         'my_orders' => action_my_orders(),
-        'admin_orders' => action_admin_orders(),
+        'admin_orders' => action_admin_orders_filtered(),
         'order_status' => action_order_status(),
         'dealers' => action_dealers(),
         'dealer_save' => action_dealer_save(),
         'dealer_approve' => action_dealer_approve(),
         'dealer_orders' => action_dealer_orders(),
         'category_save' => action_category_save(),
+        'admin_summary' => action_admin_summary(),
+        'cari_list' => action_cari_list(),
+        'cari_card' => action_cari_card(),
+        'cari_payment' => action_cari_payment(),
+        'stock_list' => action_stock_list(),
+        'stock_card' => action_stock_card(),
+        'stock_move' => action_stock_move_save(),
         default => json_out(['ok' => false, 'error' => 'Bilinmeyen istek.'], 404),
     };
 } catch (Throwable $e) {
@@ -195,25 +203,41 @@ function action_product_save(): void
         $listPrice = (int) round($price * 1.2);
     }
     $stock = (int) ($_POST['stock'] ?? 0);
+    $cost = parse_try_to_kurus($_POST['cost'] ?? '0');
+    $minStock = isset($_POST['min_stock']) ? (int) $_POST['min_stock'] : 3;
+    if ($minStock < 0) {
+        $minStock = 0;
+    }
     $active = isset($_POST['active']) ? (int) $_POST['active'] : 1;
     if ($name === '') {
         json_out(['ok' => false, 'error' => 'Ürün adı yazın.'], 400);
     }
     $image = save_upload($_FILES['image'] ?? null);
+    $pdo = db();
     if ($id) {
-        $st = db()->prepare('SELECT image FROM products WHERE id = ?');
+        $st = $pdo->prepare('SELECT image, stock FROM products WHERE id = ?');
         $st->execute([$id]);
         $old = $st->fetch();
         if (!$old) {
             json_out(['ok' => false, 'error' => 'Ürün yok.'], 404);
         }
         $img = $image ?: $old['image'];
-        db()->prepare('UPDATE products SET barcode=?, name=?, brand=?, description=?, category_id=?, price=?, list_price=?, stock=?, image=?, active=? WHERE id=?')
-            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $listPrice, $stock, $img, $active, $id]);
+        $oldStock = (int) $old['stock'];
+        $pdo->prepare('UPDATE products SET barcode=?, name=?, brand=?, description=?, category_id=?, price=?, list_price=?, cost=?, min_stock=?, image=?, active=? WHERE id=?')
+            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $listPrice, $cost, $minStock, $img, $active, $id]);
+        $delta = $stock - $oldStock;
+        if ($delta !== 0) {
+            stock_apply($pdo, $id, $delta, 'adjust', '', 0, 'Ürün kartı stok düzeltme', $cost);
+        } elseif ($cost > 0) {
+            $pdo->prepare('UPDATE products SET cost = ? WHERE id = ?')->execute([$cost, $id]);
+        }
     } else {
-        db()->prepare('INSERT INTO products (barcode,name,brand,description,category_id,price,list_price,stock,image,active,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
-            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $listPrice, $stock, $image ?? '', $active, date('c')]);
-        $id = (int) db()->lastInsertId();
+        $pdo->prepare('INSERT INTO products (barcode,name,brand,description,category_id,price,list_price,stock,cost,min_stock,image,active,created_at) VALUES (?,?,?,?,?,?,?,0,?,?,?,?,?)')
+            ->execute([$barcode, $name, $brand, $description, $categoryId, $price, $listPrice, $cost, $minStock, $image ?? '', $active, date('c')]);
+        $id = (int) $pdo->lastInsertId();
+        if ($stock > 0) {
+            stock_apply($pdo, $id, $stock, 'in', '', 0, 'İlk stok', $cost);
+        }
     }
     $st = db()->prepare('SELECT * FROM products WHERE id = ?');
     $st->execute([$id]);
@@ -242,30 +266,41 @@ function action_order_create(): void
     }
     $pdo = db();
     $pdo->beginTransaction();
-    $total = 0;
-    $rows = [];
-    $pst = $pdo->prepare('SELECT * FROM products WHERE id = ? AND active = 1');
-    foreach ($items as $it) {
-        $pid = (int) ($it['id'] ?? 0);
-        $qty = max(1, (int) ($it['qty'] ?? 1));
-        $pst->execute([$pid]);
-        $p = $pst->fetch();
-        if (!$p) {
-            $pdo->rollBack();
-            json_out(['ok' => false, 'error' => 'Ürün bulunamadı.'], 400);
+    try {
+        $total = 0;
+        $rows = [];
+        $pst = $pdo->prepare('SELECT * FROM products WHERE id = ? AND active = 1');
+        foreach ($items as $it) {
+            $pid = (int) ($it['id'] ?? 0);
+            $qty = max(1, (int) ($it['qty'] ?? 1));
+            $pst->execute([$pid]);
+            $p = $pst->fetch();
+            if (!$p) {
+                throw new RuntimeException('Ürün bulunamadı.');
+            }
+            if ((int) $p['stock'] < $qty) {
+                throw new RuntimeException('Stok yetersiz: ' . $p['name'] . ' (kalan ' . (int) $p['stock'] . ')');
+            }
+            $total += ((int) $p['price']) * $qty;
+            $rows[] = [$p, $qty];
         }
-        $total += ((int) $p['price']) * $qty;
-        $rows[] = [$p, $qty];
+        $pdo->prepare('INSERT INTO orders (dealer_id,status,note,total,created_at) VALUES (?,?,?,?,?)')
+            ->execute([(int) $u['id'], 'pending', $note, $total, date('c')]);
+        $oid = (int) $pdo->lastInsertId();
+        $ins = $pdo->prepare('INSERT INTO order_items (order_id,product_id,name,barcode,price,qty) VALUES (?,?,?,?,?,?)');
+        $itemRows = [];
+        foreach ($rows as [$p, $qty]) {
+            $ins->execute([$oid, $p['id'], $p['name'], $p['barcode'], $p['price'], $qty]);
+            $itemRows[] = ['product_id' => $p['id'], 'qty' => $qty];
+        }
+        $order = ['id' => $oid, 'dealer_id' => (int) $u['id'], 'total' => $total, 'created_at' => date('c')];
+        post_order_sale($pdo, $order, $itemRows, true);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        json_out(['ok' => false, 'error' => $e->getMessage()], 400);
     }
-    $pdo->prepare('INSERT INTO orders (dealer_id,status,note,total,created_at) VALUES (?,?,?,?,?)')
-        ->execute([(int) $u['id'], 'pending', $note, $total, date('c')]);
-    $oid = (int) $pdo->lastInsertId();
-    $ins = $pdo->prepare('INSERT INTO order_items (order_id,product_id,name,barcode,price,qty) VALUES (?,?,?,?,?,?)');
-    foreach ($rows as [$p, $qty]) {
-        $ins->execute([$oid, $p['id'], $p['name'], $p['barcode'], $p['price'], $qty]);
-    }
-    $pdo->commit();
-    json_out(['ok' => true, 'order_id' => $oid, 'total_text' => money_try($total), 'message' => 'Siparişiniz alındı. Ödeme sonrası onaylanacak.']);
+    json_out(['ok' => true, 'order_id' => $oid, 'total_text' => money_try($total), 'message' => 'Siparişiniz alındı. Cari hesaba işlendi.']);
 }
 
 function map_order(array $o, array $items): array
@@ -353,8 +388,29 @@ function action_order_status(): void
     }
     $paid = $status === 'paid' || $status === 'approved' ? date('c') : null;
     $appr = $status === 'approved' ? date('c') : null;
-    db()->prepare('UPDATE orders SET status=?, paid_at=COALESCE(?, paid_at), approved_at=COALESCE(?, approved_at) WHERE id=?')
-        ->execute([$status, $paid, $appr, $id]);
+    $pdo = db();
+    $ost = $pdo->prepare('SELECT * FROM orders WHERE id = ?');
+    $ost->execute([$id]);
+    $order = $ost->fetch();
+    if (!$order) {
+        json_out(['ok' => false, 'error' => 'Sipariş yok.'], 404);
+    }
+    $items = order_items($id);
+    $pdo->beginTransaction();
+    try {
+        if ($status === 'cancelled' && $order['status'] !== 'cancelled') {
+            reverse_order_sale($pdo, $order, $items);
+        }
+        if (in_array($status, ['paid', 'approved'], true) && $order['status'] !== 'cancelled') {
+            post_order_payment($pdo, $order, 'havale');
+        }
+        $pdo->prepare('UPDATE orders SET status=?, paid_at=COALESCE(?, paid_at), approved_at=COALESCE(?, approved_at) WHERE id=?')
+            ->execute([$status, $paid, $appr, $id]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        json_out(['ok' => false, 'error' => $e->getMessage()], 400);
+    }
     json_out(['ok' => true]);
 }
 

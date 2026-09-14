@@ -72,6 +72,10 @@ function db(): PDO
     } else {
         maybe_upgrade_catalog($pdo);
         maybe_upgrade_pricing($pdo);
+        maybe_upgrade_accounting($pdo);
+    }
+    if ($needInstall) {
+        maybe_upgrade_accounting($pdo);
     }
     return $pdo;
 }
@@ -107,10 +111,36 @@ CREATE TABLE products (
   price INTEGER NOT NULL DEFAULT 0,
   list_price INTEGER NOT NULL DEFAULT 0,
   stock INTEGER NOT NULL DEFAULT 0,
+  cost INTEGER NOT NULL DEFAULT 0,
+  min_stock INTEGER NOT NULL DEFAULT 3,
   image TEXT DEFAULT '',
   active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+CREATE TABLE ledger (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  dealer_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  method TEXT DEFAULT '',
+  ref_type TEXT DEFAULT '',
+  ref_id INTEGER DEFAULT 0,
+  note TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (dealer_id) REFERENCES users(id)
+);
+CREATE TABLE stock_moves (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  qty INTEGER NOT NULL,
+  unit_cost INTEGER NOT NULL DEFAULT 0,
+  ref_type TEXT DEFAULT '',
+  ref_id INTEGER DEFAULT 0,
+  note TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (product_id) REFERENCES products(id)
 );
 CREATE TABLE orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,6 +165,8 @@ CREATE TABLE order_items (
 );
 CREATE INDEX idx_products_barcode ON products(barcode);
 CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_ledger_dealer ON ledger(dealer_id, created_at);
+CREATE INDEX idx_stock_product ON stock_moves(product_id, created_at);
 SQL);
 }
 
@@ -183,6 +215,66 @@ function maybe_upgrade_pricing(PDO $pdo): void
         $pdo->exec('ALTER TABLE users ADD COLUMN approved INTEGER NOT NULL DEFAULT 1');
     }
     $pdo->exec('UPDATE products SET list_price = CAST(ROUND(price * 1.2) AS INTEGER) WHERE list_price = 0 AND price > 0');
+}
+
+function maybe_upgrade_accounting(PDO $pdo): void
+{
+    if (!table_has_column($pdo, 'products', 'cost')) {
+        $pdo->exec('ALTER TABLE products ADD COLUMN cost INTEGER NOT NULL DEFAULT 0');
+    }
+    if (!table_has_column($pdo, 'products', 'min_stock')) {
+        $pdo->exec('ALTER TABLE products ADD COLUMN min_stock INTEGER NOT NULL DEFAULT 3');
+    }
+    $pdo->exec(<<<'SQL'
+CREATE TABLE IF NOT EXISTS ledger (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  dealer_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  method TEXT DEFAULT '',
+  ref_type TEXT DEFAULT '',
+  ref_id INTEGER DEFAULT 0,
+  note TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (dealer_id) REFERENCES users(id)
+);
+CREATE TABLE IF NOT EXISTS stock_moves (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  qty INTEGER NOT NULL,
+  unit_cost INTEGER NOT NULL DEFAULT 0,
+  ref_type TEXT DEFAULT '',
+  ref_id INTEGER DEFAULT 0,
+  note TEXT DEFAULT '',
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+CREATE INDEX IF NOT EXISTS idx_ledger_dealer ON ledger(dealer_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_stock_product ON stock_moves(product_id, created_at);
+SQL);
+    $hasLedger = (int) $pdo->query('SELECT COUNT(*) FROM ledger')->fetchColumn();
+    if ($hasLedger === 0) {
+        $ins = $pdo->prepare('INSERT INTO ledger (dealer_id,kind,amount,method,ref_type,ref_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)');
+        foreach ($pdo->query('SELECT * FROM orders') as $o) {
+            if (($o['status'] ?? '') === 'cancelled') {
+                continue;
+            }
+            $oid = (int) $o['id'];
+            $ins->execute([(int) $o['dealer_id'], 'sale', (int) $o['total'], 'acik_hesap', 'order', $oid, 'Sipariş #' . $oid, $o['created_at']]);
+            if (in_array($o['status'], ['paid', 'approved', 'shipped'], true)) {
+                $when = $o['paid_at'] ?: ($o['approved_at'] ?: $o['created_at']);
+                $ins->execute([(int) $o['dealer_id'], 'payment', -((int) $o['total']), 'havale', 'order', $oid, 'Sipariş tahsilat #' . $oid, $when]);
+            }
+        }
+    }
+    $hasMoves = (int) $pdo->query('SELECT COUNT(*) FROM stock_moves')->fetchColumn();
+    if ($hasMoves === 0) {
+        $ins = $pdo->prepare('INSERT INTO stock_moves (product_id,kind,qty,unit_cost,note,created_at) VALUES (?,?,?,?,?,?)');
+        foreach ($pdo->query('SELECT id, stock, cost FROM products') as $p) {
+            $ins->execute([(int) $p['id'], 'opening', (int) $p['stock'], (int) ($p['cost'] ?? 0), 'Mevcut stok', date('c')]);
+        }
+    }
 }
 
 function seed_catalog(PDO $pdo, string $now): void
@@ -401,6 +493,8 @@ function public_product(array $p, ?array $viewer = null): array
         'list_price_text' => money_try($listPrice),
         'is_dealer_price' => $showDealer,
         'stock' => (int) $p['stock'],
+        'cost' => (int) ($p['cost'] ?? 0),
+        'min_stock' => (int) ($p['min_stock'] ?? 3),
         'image' => product_image_url((string) ($p['image'] ?? '')),
         'active' => (int) ($p['active'] ?? 1),
     ];

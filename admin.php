@@ -6,7 +6,6 @@ $base = BASE_PATH;
 $api = base_url('api.php');
 $home = base_url();
 $manifest = base_url('manifest.webmanifest');
-$icon = asset('assets/img/icon-192.png');
 $apple = asset('assets/img/apple-touch-icon.png');
 $css = asset('assets/css/app.css');
 $js = asset('assets/js/admin.js');
@@ -24,30 +23,32 @@ $js = asset('assets/js/admin.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>?v=12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=18">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=19">
 </head>
 <body class="admin">
   <header class="head">
     <div class="head-inner admin-head-inner">
       <a class="logo" href="<?= htmlspecialchars($home) ?>">
         <img class="logo-img" src="<?= htmlspecialchars(asset('assets/img/logo-ens.png')) ?>?v=12" alt="ENS Oto Market">
-        <span class="logo-mark"><strong>ENS OTO MARKET</strong><em>Yönetim</em></span>
+        <span class="logo-mark"><strong>ENS OTO MARKET</strong><em>Ön muhasebe</em></span>
       </a>
       <div class="head-actions">
+        <button class="icon-btn admin-desk-only" type="button" onclick="go('ozet')">Özet</button>
         <button class="icon-btn admin-desk-only" type="button" onclick="go('siparis')">Sipariş</button>
+        <button class="icon-btn admin-desk-only" type="button" onclick="go('stok')">Stok</button>
+        <button class="icon-btn admin-desk-only" type="button" onclick="go('cari')">Cari</button>
         <button class="icon-btn admin-desk-only" type="button" onclick="go('ekle')">Ürün ekle</button>
-        <button class="icon-btn admin-desk-only" type="button" onclick="go('urunler')">Ürünler</button>
-        <button class="icon-btn admin-desk-only" type="button" onclick="go('bayiler')">Bayiler</button>
         <button class="icon-btn" type="button" id="logout">Çıkış</button>
       </div>
     </div>
   </header>
   <main id="view"></main>
   <nav class="bottom-nav">
+    <button data-go="ozet">📊<br>Özet</button>
     <button data-go="siparis">📋<br>Sipariş</button>
     <button class="fab" data-go="ekle">+</button>
-    <button data-go="urunler">📦<br>Ürünler</button>
-    <button data-go="bayiler">👥<br>Bayiler</button>
+    <button data-go="stok">📦<br>Stok</button>
+    <button data-go="cari">📒<br>Cari</button>
   </nav>
   <div id="toast" class="toast"></div>
   <script>
@@ -56,6 +57,6 @@ $js = asset('assets/js/admin.js');
       api: <?= json_encode($api) ?>
     };
   </script>
-  <script src="<?= htmlspecialchars($js) ?>?v=7"></script>
+  <script src="<?= htmlspecialchars($js) ?>?v=8"></script>
 </body>
 </html>

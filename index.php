@@ -25,7 +25,7 @@ $js = asset('assets/js/app.js');
   <link rel="apple-touch-icon" href="<?= htmlspecialchars($apple) ?>?v=12">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=18">
+  <link rel="stylesheet" href="<?= htmlspecialchars($css) ?>?v=19">
 </head>
 <body>
   <div class="topbar"><div class="topbar-inner">
