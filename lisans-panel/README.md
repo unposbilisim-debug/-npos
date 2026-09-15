@@ -10,6 +10,7 @@ Bu klasör, o Laravel uygulamasının Desk dilimine ait dosyaların kopyasıdır
 - Zil yalnızca yaklaşan süreler; teklif sayısı rozet değil
 - `/dashboard` → `/Desk` (bayi için `/agent/dashboard`)
 - Grafik birimi (`bin` / `Mn`) ve “aktif paket = paket satırı” dipnotu
+- Fiyat listesi: satıra tıklayınca sistem satış fiyatı (`PaketFiyati`) küçük pencerede kaydedilir
 
 ## Yayın
 

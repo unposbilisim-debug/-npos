@@ -908,6 +908,75 @@ class LisansController extends Controller
     }
 
     /**
+     * Sistem satış fiyatını (PaketFiyati) AJAX ile güncelle — fiyat listesi.
+     */
+    public function updateListPrice(Request $request, $id)
+    {
+        if (($request->user()->role ?? null) !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Yetkiniz yok.'], 403);
+        }
+
+        $paket = LisansPaketModel::find($id);
+        if (!$paket) {
+            return response()->json(['success' => false, 'message' => 'Paket bulunamadı.'], 404);
+        }
+
+        $raw = $request->input('fiyat', $request->input('PaketFiyati'));
+        $fiyat = $this->parseTrMoney($raw);
+        if ($fiyat === null) {
+            return response()->json(['success' => false, 'message' => 'Geçerli bir tutar girin.'], 422);
+        }
+
+        $eski = (float) $paket->PaketFiyati;
+        $paket->PaketFiyati = $fiyat;
+        $paket->save();
+
+        try {
+            activity('Paket İşlemleri')
+                ->causedBy(Auth::user())
+                ->withProperties([
+                    'id' => $paket->id,
+                    'eski' => $eski,
+                    'yeni' => $fiyat,
+                ])
+                ->log('Sistem satış fiyatı güncellendi');
+        } catch (\Throwable $e) {
+            // fiyat kaydı asıl iş; log yoksa da JSON dön
+        }
+
+        return response()->json([
+            'success' => true,
+            'fiyat' => $fiyat,
+            'fiyat_text' => number_format($fiyat, 2, ',', '.').' ₺',
+        ]);
+    }
+
+    private function parseTrMoney($raw): ?float
+    {
+        $s = trim((string) $raw);
+        if ($s === '') {
+            return null;
+        }
+        $s = str_replace(['₺', ' ', "\u{00a0}"], '', $s);
+        if (preg_match('/^\d{1,3}(\.\d{3})+(,\d{1,2})?$/', $s)) {
+            $s = str_replace('.', '', $s);
+            $s = str_replace(',', '.', $s);
+        } elseif (str_contains($s, ',') && substr_count($s, ',') === 1) {
+            $s = str_replace('.', '', $s);
+            $s = str_replace(',', '.', $s);
+        }
+        if (!is_numeric($s)) {
+            return null;
+        }
+        $n = round((float) $s, 2);
+        if ($n < 0) {
+            return null;
+        }
+
+        return $n;
+    }
+
+    /**
      * Admin Yazar Kasa Raporu
      */
     public function YazarKasaReport()

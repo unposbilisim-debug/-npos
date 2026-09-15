@@ -63,6 +63,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/fiyat-listesi', [LisansController::class, 'showPriceList'])->name('priceList');
+    Route::get('/fiyatelistesi', [LisansController::class, 'showPriceList']);
+    Route::post('/fiyat-listesi/{id}', [LisansController::class, 'updateListPrice'])->name('priceList.update');
 
     Route::get('/Agreement', [SozlesmelerController::class, 'Agreement'])->name('Agreement');
     Route::get('/DownloadAgreement/{id}', [SozlesmelerController::class, 'DownloadAgreement'])->name('DownloadAgreement');
