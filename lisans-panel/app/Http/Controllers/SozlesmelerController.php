@@ -103,29 +103,8 @@ class SozlesmelerController extends Controller
         return $slug ? route('Agreement', ['tip' => $slug]) : route('Agreement');
     }
 
-    public function LicenseAgreement(Request $request, $siparisNo, $tip)
+    private function flattenLicensePackages($lisans): array
     {
-        try {
-        if (! isset(self::TIP_SLUGS[$tip])) {
-            abort(404);
-        }
-
-        $lisans = LisansModel::where('SiparisNo', $siparisNo)->firstOrFail();
-        $musteri = MusteriModel::find($lisans->Musteri);
-        if (! $musteri) {
-            abort(404);
-        }
-
-        $user = Auth::user();
-        if (($user->role ?? '') !== 'admin') {
-            $ok = ((int) $lisans->Bayi === (int) $user->id) || ((int) $musteri->Bayi === (int) $user->id);
-            if (! $ok) {
-                abort(403);
-            }
-        }
-
-        $paketFiltre = (string) $request->query('paket', '');
-        $paketModelleri = LisansPaketModel::all()->keyBy('PaketName');
         $lisansData = json_decode($lisans->Lisans, true);
         $lisansData = is_array($lisansData) ? $lisansData : [];
         $ham = [];
@@ -146,44 +125,92 @@ class SozlesmelerController extends Controller
                 }
             }
         }
+        return $ham;
+    }
 
-        $aktifPaketler = [];
-        $toplamTutar = 0.0;
-        foreach ($ham as $p) {
-            if ((int) ($p['status'] ?? 0) !== 1) {
-                continue;
-            }
-            if ($paketFiltre !== '' && ($p['paketName'] ?? '') !== $paketFiltre) {
-                continue;
-            }
-            $model = $paketModelleri->get($p['paketName']);
-            $fiyat = $model ? (float) $model->PaketFiyati : 0.0;
-            $toplamTutar += $fiyat;
-            $aktifPaketler[] = [
-                'adi' => $model->PaketAdi ?? $p['paketName'],
-                'sure' => $p['date'] ?? '—',
-                'tutar' => $fiyat,
-            ];
+    public function LicenseAgreement(Request $request, $siparisNo, $tip)
+    {
+        $lisans = LisansModel::where('SiparisNo', $siparisNo)->first();
+        if (! $lisans) {
+            abort(404);
         }
+        return redirect()->route('CustomerAgreement', $lisans->Musteri);
+    }
 
-        $bayiAdi = optional($musteri->kimbubayi)->Unvan
-            ?: optional($lisans->bayilers)->name
-            ?: '—';
-        $sayfaBaslik = self::TIP_BASLIK[$tip];
-        $tarih = now()->format('d.m.Y');
-        $sozlesmeNo = $lisans->SiparisNo.'-'.strtoupper($tip);
+    public function CustomerAgreement($id)
+    {
+        try {
+            $raw = urldecode((string) $id);
+            if ($raw !== '' && ctype_digit($raw)) {
+                $id = (int) $raw;
+            } else {
+                try {
+                    $id = decrypt($raw);
+                } catch (\Throwable $e) {
+                    abort(404);
+                }
+            }
 
-        return view('sozlesmeler.lisans', compact(
-            'lisans',
-            'musteri',
-            'tip',
-            'sayfaBaslik',
-            'aktifPaketler',
-            'toplamTutar',
-            'bayiAdi',
-            'tarih',
-            'sozlesmeNo'
-        ));
+            $musteri = MusteriModel::find($id);
+            if (! $musteri) {
+                abort(404);
+            }
+
+            $user = Auth::user();
+            if (($user->role ?? '') !== 'admin' && (int) $musteri->Bayi !== (int) $user->id) {
+                abort(403);
+            }
+
+            $lisanslar = LisansModel::where('Musteri', $id)->where('Tipi', 'satis')->get();
+            $paketModelleri = LisansPaketModel::all()->keyBy('PaketName');
+            $aktifPaketler = [];
+            $toplamTutar = 0.0;
+            $siparisler = [];
+            $pciler = [];
+            foreach ($lisanslar as $lisans) {
+                if ($lisans->SiparisNo) {
+                    $siparisler[] = $lisans->SiparisNo;
+                }
+                if ($lisans->PcName) {
+                    $pciler[] = $lisans->PcName;
+                }
+                foreach ($this->flattenLicensePackages($lisans) as $p) {
+                    if ((int) ($p['status'] ?? 0) !== 1) {
+                        continue;
+                    }
+                    $model = $paketModelleri->get($p['paketName']);
+                    $fiyat = $model ? (float) $model->PaketFiyati : 0.0;
+                    $toplamTutar += $fiyat;
+                    $aktifPaketler[] = [
+                        'adi' => $model->PaketAdi ?? $p['paketName'],
+                        'sure' => $p['date'] ?? '—',
+                        'tutar' => $fiyat,
+                    ];
+                }
+            }
+
+            $bayiAdi = optional($musteri->kimbubayi)->Unvan ?: '—';
+            $sayfaBaslik = 'Genel sözleşme';
+            $tarih = now()->format('d.m.Y');
+            $sozlesmeNo = 'GS-'.$musteri->id.'-'.now()->format('Ymd');
+            $siparisOzet = $siparisler ? implode(', ', $siparisler) : '—';
+            $pcOzet = $pciler ? implode(', ', array_unique($pciler)) : 'işyeri / kasa';
+            $lisans = $lisanslar->first();
+            $tip = 'genel';
+
+            return view('sozlesmeler.lisans', compact(
+                'lisans',
+                'musteri',
+                'tip',
+                'sayfaBaslik',
+                'aktifPaketler',
+                'toplamTutar',
+                'bayiAdi',
+                'tarih',
+                'sozlesmeNo',
+                'siparisOzet',
+                'pcOzet'
+            ));
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             throw $e;
         } catch (\Throwable $e) {

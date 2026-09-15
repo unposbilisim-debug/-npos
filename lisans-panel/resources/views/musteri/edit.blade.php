@@ -186,38 +186,6 @@
         </div>
     </div>
 
-    {{-- İstatistik Kartları --}}
-    <div class="row g-4 mb-5">
-        <div class="col-sm-6 col-xl-2">
-            <div class="stat-card">
-                <div class="icon-wrapper bg-primary bg-opacity-10 text-primary">
-                    <span class="material-icons-outlined">diversity_2</span>
-                </div>
-                <h3 class="fw-bold mb-0 text-dark">{{ $saylisans }}</h3>
-                <small class="text-muted">Lisans Adeti</small>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-2">
-            <div class="stat-card">
-                <div class="icon-wrapper bg-info bg-opacity-10 text-info">
-                    <span class="material-icons-outlined">sensor_occupied</span>
-                </div>
-                <h3 class="fw-bold mb-0 text-dark">{{ $sayteklif }}</h3>
-                <small class="text-muted">Teklif Adeti</small>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-2">
-            <div class="stat-card">
-                <div class="icon-wrapper bg-success bg-opacity-10 text-success">
-                    <span class="material-icons-outlined">public</span>
-                </div>
-                <h3 class="fw-bold mb-0 text-dark">Online</h3>
-                <small class="text-muted">Durum</small>
-            </div>
-        </div>
-        {{-- Diğer boş kartlar silindi, yer kazanmak için --}}
-    </div>
-
     {{-- Ana Tablo Alanı --}}
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-5">
         <div class="card-header bg-white border-bottom-0 p-0">
@@ -241,6 +209,11 @@
                     <a class="nav-link" data-bs-toggle="tab" href="#sync-yedekler" role="tab">
                         <i class="bi bi-cloud-arrow-down me-2"></i>Yedekler
                         <span class="badge bg-danger ms-1">{{ $syncYedekler->count() }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#sozlesmeler" role="tab">
+                        <i class="bi bi-file-earmark-text me-2"></i>Sözleşmeler
                     </a>
                 </li>
             </ul>
@@ -442,47 +415,6 @@
                                                         @endif
                                                     @endif
                                                 </div>
-                                            </td>
-                                        </tr>
-                                        @php
-                                            $sozPaketler = [];
-                                            $rawLisans = is_string($GeldiLisans->Lisans) ? json_decode($GeldiLisans->Lisans, true) : $GeldiLisans->Lisans;
-                                            $rawLisans = is_array($rawLisans) ? $rawLisans : [];
-                                            foreach ($rawLisans as $item) {
-                                                $bag = [];
-                                                if (isset($item['yazarkasa']) && is_array($item['yazarkasa'])) {
-                                                    $bag = $item['yazarkasa'];
-                                                } elseif (isset($item['paketName'])) {
-                                                    $bag = [$item];
-                                                } elseif (is_array($item)) {
-                                                    $bag = $item;
-                                                }
-                                                foreach ($bag as $px) {
-                                                    if (!is_array($px) || empty($px['paketName'])) continue;
-                                                    if ((int)($px['status'] ?? 0) !== 1) continue;
-                                                    $adi = $px['paketName'];
-                                                    foreach ($LisansPaket as $lp) {
-                                                        if ($lp->PaketName == $px['paketName']) { $adi = $lp->PaketAdi; break; }
-                                                    }
-                                                    $sozPaketler[] = ['name' => $px['paketName'], 'adi' => $adi, 'sure' => $px['date'] ?? ''];
-                                                }
-                                            }
-                                            if (!$sozPaketler) {
-                                                $sozPaketler[] = ['name' => '', 'adi' => ($GeldiLisans->PcName ?: 'Lisans'), 'sure' => ''];
-                                            }
-                                        @endphp
-                                        <tr>
-                                            <td colspan="6" class="bg-light">
-                                                @foreach ($sozPaketler as $sp)
-                                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 py-1">
-                                                        <span class="small fw-medium">{{ $sp['adi'] }}@if($sp['sure']) <span class="text-muted">· {{ $sp['sure'] }}</span>@endif</span>
-                                                        <span class="small">
-                                                            <a class="me-2" target="_blank" href="{{ route('LicenseAgreement', array_filter(['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'satis', 'paket' => $sp['name'] ?: null])) }}">Satış</a>
-                                                            <a class="me-2" target="_blank" href="{{ route('LicenseAgreement', array_filter(['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'bakim', 'paket' => $sp['name'] ?: null])) }}">Bakım</a>
-                                                            <a target="_blank" href="{{ route('LicenseAgreement', array_filter(['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'servis', 'paket' => $sp['name'] ?: null])) }}">Servis</a>
-                                                        </span>
-                                                    </div>
-                                                @endforeach
                                             </td>
                                         </tr>
                                     @endif
@@ -2305,6 +2237,26 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade p-5" id="sozlesmeler" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h5 class="mb-1">Genel sözleşme</h5>
+                            <p class="text-muted mb-0 small">Satış, bakım ve servis tek metinde. Müşteri ve aktif lisans/paket bilgisi doldurulur.</p>
+                        </div>
+                        <a class="btn btn-dark px-4" target="_blank" href="{{ route('CustomerAgreement', $Musteri->id) }}">
+                            <i class="bi bi-printer me-1"></i> Genel sözleşmeyi aç
+                        </a>
+                    </div>
+                    <div class="border rounded-3 p-4 bg-light">
+                        <div class="row g-3 small">
+                            <div class="col-md-6"><span class="text-muted">Müşteri</span><div class="fw-semibold">{{ $Musteri->Unvan }}</div></div>
+                            <div class="col-md-6"><span class="text-muted">VKN</span><div class="fw-semibold">{{ $Musteri->VergiNo ?: '—' }}</div></div>
+                            <div class="col-md-6"><span class="text-muted">Bayi</span><div class="fw-semibold">{{ optional($Musteri->kimbubayi)->Unvan ?: '—' }}</div></div>
+                            <div class="col-md-6"><span class="text-muted">Yetkili</span><div class="fw-semibold">{{ $Musteri->Yetkili ?: '—' }}</div></div>
+                        </div>
                     </div>
                 </div>
                 

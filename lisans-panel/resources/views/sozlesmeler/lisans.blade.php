@@ -82,6 +82,8 @@
     $paketOzet = $paketOzet !== '' ? $paketOzet : 'ilgili yazılım paketi';
     $sureOzet = collect($aktifPaketler)->pluck('sure')->filter(fn ($s) => $s && $s !== '—')->unique()->implode(', ');
     $sureOzet = $sureOzet !== '' ? $sureOzet : 'lisans kaydındaki bitiş tarihi';
+    $siparisOzet = $siparisOzet ?? (optional($lisans)->SiparisNo ?: '—');
+    $pcOzet = $pcOzet ?? (optional($lisans)->PcName ?: 'işyeri / kasa');
 @endphp
 <div class="toolbar">
     <a href="{{ url()->previous() }}">Geri</a>
@@ -115,7 +117,7 @@
     </div>
 
     <h2 class="title">{{ $sayfaBaslik }}</h2>
-    <p class="no">Sözleşme no: {{ $sozlesmeNo }} · Tarih: {{ $tarih }} · Sipariş: {{ $lisans->SiparisNo }} · PC: {{ $lisans->PcName ?: '—' }}</p>
+    <p class="no">Sözleşme no: {{ $sozlesmeNo }} · Tarih: {{ $tarih }} · Sipariş: {{ $siparisOzet }} · PC: {{ $pcOzet }}</p>
 
     <table class="kalem">
         <thead>
@@ -144,37 +146,16 @@
         </tbody>
     </table>
 
-    @if($tip === 'satis')
         <ol class="madde">
-            <li><strong>Taraflar.</strong> İşbu Yazılım Satış Sözleşmesi bir tarafta ÜnPOS Bilişim (“Satıcı”) ile diğer tarafta yukarıda kimliği yazılı {{ $musteri->Unvan }} (“Alıcı”) arasında, {{ $tarih }} tarihinde, bağlı bayi {{ $bayiAdi }} aracılığıyla akdedilmiştir.</li>
-            <li><strong>Konu.</strong> Sözleşmenin konusu; Alıcı’nın {{ $lisans->PcName ?: 'belirtilen işyeri / kasa' }} ortamında kullanmak üzere {{ $paketOzet }} yazılım lisansının (lisans anahtarı ve kullanım hakkı) satışı ve teslimidir. Kaynak kod, mülkiyet ve marka hakları Satıcı’da kalır; Alıcı’ya münhasır olmayan, devredilemez bir kullanım hakkı tanınır.</li>
-            <li><strong>Bedel.</strong> Lisans bedeli, yukarıdaki paket satırlarında gösterilen tutar üzerinden {{ $toplamTutar > 0 ? $para($toplamTutar) : 'taraflarca ayrıca teyit edilen bedel' }} olarak uygulanır. Aksi yazılı kararlaştırılmadıkça bedel, teslimden önce veya lisansın aktifleştirilmesi ile muaccel olur. Geciken ödemede Satıcı lisansı askıya alabilir.</li>
-            <li><strong>Süre ve teslim.</strong> Lisans, sipariş no {{ $lisans->SiparisNo }} ile tanımlanır. Kullanım süresi paket bitiş tarihi(leri) olan {{ $sureOzet }} ile sınırlıdır. Teslim, lisans anahtarının Alıcı’ya bildirilmesi veya programın aktive edilmesiyle gerçekleşmiş sayılır.</li>
-            <li><strong>Yükümlülükler.</strong> Satıcı, yazılımın lisans kaydına uygun çalışması için makul çabayı gösterir. Alıcı; anahtarı üçüncü kişilere vermez, kopyalamaz, tersine mühendislik yapmaz, işyeri dışında çoğaltmaz. Donanım, işletim sistemi ve internet Alıcı’nın sorumluluğundadır. Ayıplı ifa ihbarı, teslimden itibaren 7 gün içinde yazılı yapılır.</li>
-            <li><strong>Gizlilik.</strong> Taraflar, bu sözleşme ve işin ifası sırasında öğrendikleri ticari, teknik ve müşteri verilerini sözleşme süresince ve sonrasında 3 yıl boyunca gizli tutar; yasal zorunluluk dışında üçüncü kişiye vermez.</li>
-            <li><strong>Yetkili mahkeme.</strong> Bu sözleşmeden doğan uyuşmazlıklarda Türkiye Cumhuriyeti hukuku uygulanır; yetkili mahkeme ve icra daireleri Satıcı’nın faaliyet yerindeki mahkemeler ile Alıcı’nın ticaret sicilindeki merkezinin mahkemeleridir.</li>
+            <li><strong>Taraflar.</strong> İşbu Genel Sözleşme bir tarafta ÜnPOS Bilişim (“Satıcı / Hizmet Veren”) ile diğer tarafta yukarıda kimliği yazılı {{ $musteri->Unvan }} (“Müşteri”) arasında {{ $tarih }} tarihinde, bağlı bayi {{ $bayiAdi }} aracılığıyla akdedilmiştir. Sözleşme; yazılım lisansı satışı, bakım/destek ve servis hizmetlerini birlikte kapsar.</li>
+            <li><strong>Konu — lisans (satış).</strong> Satıcı, Müşteri’ye {{ $pcOzet }} ortamında kullanmak üzere {{ $paketOzet }} yazılımı için münhasır olmayan, devredilemez bir kullanım hakkı (lisans anahtarı) verir. Kaynak kod, mülkiyet ve marka Satıcı’da kalır. Sipariş(ler): {{ $siparisOzet }}.</li>
+            <li><strong>Konu — bakım.</strong> Lisans süresi boyunca Satıcı, mesai saatleri içinde uzaktan destek, hata giderme ve yayımlanan sürüm güncellemelerini sağlar. Yeni modül satışı bu maddenin dışındadır. Müşteri güncel yedek alır ve uzaktan erişime izin verir.</li>
+            <li><strong>Konu — servis.</strong> Kurulum, eğitim, yerinde veya uzaktan yapılandırma ve arıza tespiti işçilik hizmeti bu sözleşme kapsamındadır. Yedek parça, mali cihaz, işletim sistemi ve üçüncü kişi cihazları ayrıca faturalanır. Yol ve parça bedeli Müşteri’ye aittir.</li>
+            <li><strong>Bedel ve süre.</strong> Bedel, yukarıdaki paket satırlarında gösterilen {{ $toplamTutar > 0 ? $para($toplamTutar) : 'taraflarca teyit edilen' }} tutar esas alınır (KDV hariç kayıt). Kullanım, bakım ve temel destek; paket bitiş tarihi(leri) {{ $sureOzet }} ile sınırlıdır. Geciken ödemede lisans ve hizmet askıya alınabilir. Süre yenilenmezse yeni sürüm ve bakım hakkı sona erer.</li>
+            <li><strong>Yükümlülükler.</strong> Müşteri anahtarı üçüncü kişiye vermez, kopyalamaz, tersine mühendislik yapmaz. Donanım, işletim sistemi, internet ve yedekleme Müşteri’nin sorumluluğundadır. Satıcı işi özenle yapar; Müşteri’nin yedeklememesi, yetkisiz müdahalesi veya başka yazılımdan doğan veri kaybından sorumlu değildir. Ayıp ihbarı teslimden itibaren 7 gün içinde yazılı yapılır.</li>
+            <li><strong>Gizlilik.</strong> Taraflar; satış, stok, cari, fiş ve kişisel verileri sözleşme süresince ve sonrasında 3 yıl gizli tutar. Destek/servis sırasında görülen veriler yalnızca işin ifası için kullanılır.</li>
+            <li><strong>Yetkili mahkeme.</strong> Uygulanacak hukuk T.C. hukukudur. Yetkili mahkeme ve icra daireleri Satıcı’nın faaliyet yeri ile Müşteri’nin ticaret merkezinin bulunduğu yer mahkemeleridir.</li>
         </ol>
-    @elseif($tip === 'bakim')
-        <ol class="madde">
-            <li><strong>Taraflar.</strong> İşbu Yazılım Bakım Sözleşmesi bir tarafta ÜnPOS Bilişim (“Hizmet Veren”) ile diğer tarafta {{ $musteri->Unvan }} (“Müşteri”) arasında {{ $tarih }} tarihinde akdedilmiştir. Hizmet, bağlı bayi {{ $bayiAdi }} kanalıyla yürütülebilir.</li>
-            <li><strong>Konu.</strong> Konu; Müşteri’nin sipariş no {{ $lisans->SiparisNo }} kapsamındaki {{ $paketOzet }} yazılımı için sürüm güncellemesi, hata giderme ve uzaktan destek hizmetinin sağlanmasıdır. Yeni modül satışı, yerinde kurulum ve donanım tamiri bu sözleşmenin dışında olup servis sözleşmesine tabidir.</li>
-            <li><strong>Bedel.</strong> Bakım bedeli, ilgili paketlerin liste bedeli üzerinden {{ $toplamTutar > 0 ? $para($toplamTutar) : 'taraflarca kararlaştırılan yıllık bakım bedeli' }} esas alınarak uygulanır (KDV hariç kayıt). Ödeme, dönem başında peşin yapılır. Ödenmeyen dönemde bakım ve güncelleme durdurulabilir; lisans kullanımı satış sözleşmesindeki süreye bağlıdır.</li>
-            <li><strong>Süre.</strong> Bakım süresi, paketin bitiş tarihi olan {{ $sureOzet }} tarihine kadar geçerlidir. Süre bitiminde yenilenmezse güncelleme ve destek yükümlülüğü sona erer; yazılımın o ana kadarki sürümü Müşteri’de kalabilir ancak yeni sürüm hakkı doğmaz.</li>
-            <li><strong>Yükümlülükler.</strong> Hizmet Veren, mesai saatleri içinde uzaktan bağlantı ile arızaya makul sürede cevap verir. Müşteri; güncel yedek alır, yetkisiz müdahale etmez, arızayı doğru bildirir ve uzaktan erişime izin verir. Veri kaybından, Müşteri’nin yedeklememesi veya üçüncü kişi müdahalesinden Hizmet Veren sorumlu değildir.</li>
-            <li><strong>Gizlilik.</strong> Destek sırasında görülen satış, stok, cari ve kişisel veriler gizli tutulur; yalnızca arızanın giderilmesi için kullanılır ve yasal saklama dışında kopyalanmaz.</li>
-            <li><strong>Yetkili mahkeme.</strong> Uygulanacak hukuk T.C. hukukudur. Yetkili yargı yeri, Hizmet Veren’in faaliyet yeri ile Müşteri’nin ticaret merkezi mahkemeleri ve icra daireleridir.</li>
-        </ol>
-    @else
-        <ol class="madde">
-            <li><strong>Taraflar.</strong> İşbu Servis Sözleşmesi bir tarafta ÜnPOS Bilişim (“Servis Sağlayıcı”) ile diğer tarafta {{ $musteri->Unvan }} (“Müşteri”) arasında {{ $tarih }} tarihinde, bayi {{ $bayiAdi }} aracılığıyla kurulmuştur.</li>
-            <li><strong>Konu.</strong> Konu; sipariş no {{ $lisans->SiparisNo }} ve {{ $paketOzet }} ile ilişkili yazılım/kasa ortamında yerinde veya uzaktan kurulum, eğitim, arıza tespiti, yapılandırma ve benzeri işçilik hizmetidir. Yedek parça, mali cihaz, işletim sistemi lisansı ve üçüncü kişi cihazları ayrıca faturalanır.</li>
-            <li><strong>Bedel.</strong> Servis bedeli, işin mahiyetine göre paket satırındaki {{ $toplamTutar > 0 ? $para($toplamTutar) : 'keşif veya tarife bedeli' }} üzerinden veya yerinde çalışma için ayrıca bildirilen işçilik ücreti ile tahsil edilir. Yol, konaklama ve parça bedeli Müşteri’ye aittir. İş bitiminde fatura düzenlenir; ödeme vadesi faturada yazılı süredir.</li>
-            <li><strong>Süre.</strong> Bu sözleşme, işin tamamlanmasına veya ilgili lisans/paket bitiş tarihi {{ $sureOzet }} tarihine kadar (hangisi önce ise) geçerlidir. Acil çağrı, mesai dışı çalışma ve tekrarlayan bakım ayrı iş emri sayılır.</li>
-            <li><strong>Yükümlülükler.</strong> Servis Sağlayıcı, işi özenle ve meslek kuralına uygun yapar. Müşteri işyerine giriş, yetkili personel, elektrik/ağ ve mevcut yedekleri sağlar. Müşteri onayı olmadan veri silinmez. Servisten sonra oluşan, Müşteri’nin kullanım hatasından veya başka yazılımdan kaynaklanan arızalar yeni iş kapsamındadır.</li>
-            <li><strong>Gizlilik.</strong> Servis personeli işyerinde gördüğü ticari sır, fiş, cari ve personel bilgilerini gizli tutar; işin bitiminden sonra da 3 yıl bu yükümlülük devam eder.</li>
-            <li><strong>Yetkili mahkeme.</strong> Uyuşmazlıklarda T.C. hukuku uygulanır; yetkili mahkeme ve icra daireleri Servis Sağlayıcı’nın faaliyet yeri ile Müşteri’nin merkezinin bulunduğu yer mahkemeleridir.</li>
-        </ol>
-    @endif
 
     <p>İşbu sözleşme, {{ $tarih }} tarihinde iki nüsha olarak düzenlenmiş ve taraflarca okunarak kabul edilmiştir.</p>
 

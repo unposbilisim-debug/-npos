@@ -70,6 +70,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/DownloadAgreement/{id}', [SozlesmelerController::class, 'DownloadAgreement'])->name('DownloadAgreement');
     Route::post('/AddAgreement', [SozlesmelerController::class, 'AddAgreement'])->name('AddAgreement');
     Route::get('/LisansSozlesme/{siparisNo}/{tip}', [SozlesmelerController::class, 'LicenseAgreement'])->name('LicenseAgreement');
+    Route::get('/MusteriSozlesme/{id}', [SozlesmelerController::class, 'CustomerAgreement'])->name('CustomerAgreement');
 
     //Bayi İşlemleri
     Route::get('/Dealer', [BayiController::class, 'Dealer'])->name('Dealer');
