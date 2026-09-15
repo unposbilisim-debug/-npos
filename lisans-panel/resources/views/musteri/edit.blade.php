@@ -2262,6 +2262,47 @@
                             <div class="col-md-6"><span class="text-muted">Yetkili</span><div class="fw-semibold">{{ $Musteri->Yetkili ?: '—' }}</div></div>
                         </div>
                     </div>
+
+                    @php
+                        $onayliBelgeler = $onayliBelgeler ?? [];
+                        $belgeSlotlari = [
+                            'teklif' => 'Onaylı teklif',
+                            'sozlesme' => 'Onaylı genel sözleşme',
+                        ];
+                    @endphp
+                    <h5 class="mt-5 mb-3">Onaylı belgeler</h5>
+                    <p class="text-muted small mb-3">Müşterinin onayladığı teklif ve imzalı genel sözleşmeyi PDF veya görsel olarak yükleyin. Yeni yükleme eskisinin yerine geçer.</p>
+                    <div class="row g-3">
+                        @foreach($belgeSlotlari as $tip => $baslik)
+                            @php $kayit = $onayliBelgeler[$tip] ?? null; @endphp
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="fw-semibold mb-2">{{ $baslik }}</div>
+                                    @if($kayit)
+                                        <div class="small mb-2">
+                                            <div class="text-truncate" title="{{ $kayit['orijinal'] ?? '' }}">{{ $kayit['orijinal'] ?? ($kayit['dosya'] ?? '') }}</div>
+                                            <div class="text-muted">{{ $kayit['tarih'] ?? '' }}</div>
+                                        </div>
+                                        <div class="d-flex gap-2 mb-3">
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ route('MusteriBelge.download', ['id' => $Musteri->id, 'tip' => $tip]) }}">İndir</a>
+                                            <form method="POST" action="{{ route('MusteriBelge.delete', ['id' => $Musteri->id, 'tip' => $tip]) }}" onsubmit="return confirm('Bu belge silinsin mi?')">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <p class="text-muted small mb-3">Henüz yüklenmedi.</p>
+                                    @endif
+                                    <form method="POST" action="{{ route('MusteriBelge.upload', $Musteri->id) }}" enctype="multipart/form-data">
+                                        @csrf
+                                        <input type="hidden" name="tip" value="{{ $tip }}">
+                                        <input type="file" name="dosya" class="form-control form-control-sm mb-2" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*" required>
+                                        <button type="submit" class="btn btn-sm btn-dark">{{ $kayit ? 'Değiştir' : 'Yükle' }}</button>
+                                    </form>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
                 
                 <style>
@@ -2636,6 +2677,12 @@
         @if(session('warning'))
             showToast("{{ session('warning') }}", 'warning');
         @endif
+        if (window.location.hash === '#sozlesmeler') {
+            const tab = document.querySelector('a[href="#sozlesmeler"]');
+            if (tab && window.bootstrap) {
+                bootstrap.Tab.getOrCreateInstance(tab).show();
+            }
+        }
     });
 </script>
 @endsection

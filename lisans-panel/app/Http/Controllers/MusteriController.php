@@ -20,6 +20,7 @@ use App\Models\LicenseCari;
 use App\Models\LicenseMasa;
 use App\Models\LicensePatron;
 use App\Models\LicenseYedek;
+use Illuminate\Support\Facades\Storage;
 
 class MusteriController extends Controller
 {
@@ -410,6 +411,8 @@ public function EditCustomer(Request $request, $id)
 									->orderByDesc('yedek_tarihi')->limit(50)->get();
     }
 
+    $onayliBelgeler = $this->belgeMeta($id);
+
     return view('musteri.edit', compact(
         'Musteri',
         'Lisanslar',
@@ -427,6 +430,7 @@ public function EditCustomer(Request $request, $id)
         'patronlar',
         'musteriLisansAnahtarlari',
         'syncYedekler',
+        'onayliBelgeler',
     ));
 }
 
@@ -494,11 +498,13 @@ public function EditCustomer(Request $request, $id)
 											->orderByDesc('yedek_tarihi')->limit(50)->get();
         }
 
+        $onayliBelgeler = $this->belgeMeta($id);
+
         // 'lisansPaketler' değil 'LisansPaket' gönderiliyor
         return view('musteri.edit', compact(
             'Musteri', 'Lisanslar', 'saylisans', 'sayteklif', 'LisansPaket', 'jsonLisanslar',
             'syncProducts', 'syncFisler', 'syncFaturalar', 'syncCariler', 'syncMasalar', 'syncToplamCiro',
-            'patronlar', 'musteriLisansAnahtarlari',  'syncYedekler'
+            'patronlar', 'musteriLisansAnahtarlari',  'syncYedekler', 'onayliBelgeler'
 			
         ));
     }
@@ -1009,5 +1015,128 @@ public function EditCustomer(Request $request, $id)
 
         $Musteriyeni = urlencode(encrypt($yenimusteri->id));
         return redirect()->route('EditCustomer', ['id' => $Musteriyeni])->with('success', 'Müşteri Başarılı Şekilde Oluşturuldu ve Kaynak Sistemden Silindi. Eksikleri Doldur')->with('run_success_js', true);
+    }
+
+    private function belgeDir($id): string
+    {
+        return 'musteri-belgeler/'.$id;
+    }
+
+    private function belgeMeta($id): array
+    {
+        $path = $this->belgeDir($id).'/meta.json';
+        if (! Storage::disk('local')->exists($path)) {
+            return [];
+        }
+        $json = json_decode(Storage::disk('local')->get($path), true);
+
+        return is_array($json) ? $json : [];
+    }
+
+    private function assertMusteriAccess($musteri): void
+    {
+        $user = Auth::user();
+        if (($user->role ?? '') !== 'admin' && (int) $musteri->Bayi !== (int) $user->id) {
+            abort(403);
+        }
+    }
+
+    private function editMusteriUrl($id): string
+    {
+        $route = (Auth::user()->role ?? '') === 'admin' ? 'EditCustomer' : 'agentEditCustomer';
+
+        return route($route, ['id' => urlencode(encrypt($id))]).'#sozlesmeler';
+    }
+
+    public function uploadMusteriBelge(Request $request, $id)
+    {
+        $id = $this->resolveMusteriId($id);
+        $musteri = MusteriModel::find($id);
+        if (! $musteri) {
+            abort(404);
+        }
+        $this->assertMusteriAccess($musteri);
+
+        $request->validate([
+            'tip' => 'required|in:teklif,sozlesme',
+            'dosya' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:12288',
+        ]);
+
+        $tip = $request->input('tip');
+        $file = $request->file('dosya');
+        $dir = $this->belgeDir($id);
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'pdf');
+        $stored = $tip.'.'.$ext;
+
+        Storage::disk('local')->makeDirectory($dir);
+        $meta = $this->belgeMeta($id);
+        if (! empty($meta[$tip]['dosya'])) {
+            $old = $dir.'/'.$meta[$tip]['dosya'];
+            if (Storage::disk('local')->exists($old)) {
+                Storage::disk('local')->delete($old);
+            }
+        }
+
+        Storage::disk('local')->putFileAs($dir, $file, $stored);
+        $meta[$tip] = [
+            'orijinal' => $file->getClientOriginalName(),
+            'dosya' => $stored,
+            'mime' => $file->getClientMimeType(),
+            'boyut' => $file->getSize(),
+            'tarih' => now()->format('d.m.Y H:i'),
+        ];
+        Storage::disk('local')->put($dir.'/meta.json', json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+        return redirect()->to($this->editMusteriUrl($id))->with('success', 'Onaylı belge kaydedildi')->with('run_success_js', true);
+    }
+
+    public function downloadMusteriBelge($id, $tip)
+    {
+        $id = $this->resolveMusteriId($id);
+        $musteri = MusteriModel::find($id);
+        if (! $musteri) {
+            abort(404);
+        }
+        $this->assertMusteriAccess($musteri);
+        if (! in_array($tip, ['teklif', 'sozlesme'], true)) {
+            abort(404);
+        }
+
+        $meta = $this->belgeMeta($id);
+        if (empty($meta[$tip]['dosya'])) {
+            abort(404);
+        }
+        $rel = $this->belgeDir($id).'/'.$meta[$tip]['dosya'];
+        if (! Storage::disk('local')->exists($rel)) {
+            abort(404);
+        }
+
+        return Storage::disk('local')->download($rel, $meta[$tip]['orijinal'] ?? $meta[$tip]['dosya']);
+    }
+
+    public function deleteMusteriBelge($id, $tip)
+    {
+        $id = $this->resolveMusteriId($id);
+        $musteri = MusteriModel::find($id);
+        if (! $musteri) {
+            abort(404);
+        }
+        $this->assertMusteriAccess($musteri);
+        if (! in_array($tip, ['teklif', 'sozlesme'], true)) {
+            abort(404);
+        }
+
+        $dir = $this->belgeDir($id);
+        $meta = $this->belgeMeta($id);
+        if (! empty($meta[$tip]['dosya'])) {
+            $old = $dir.'/'.$meta[$tip]['dosya'];
+            if (Storage::disk('local')->exists($old)) {
+                Storage::disk('local')->delete($old);
+            }
+        }
+        unset($meta[$tip]);
+        Storage::disk('local')->put($dir.'/meta.json', json_encode($meta, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+        return redirect()->to($this->editMusteriUrl($id))->with('success', 'Belge silindi')->with('run_success_js', true);
     }
 }

@@ -98,6 +98,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/UpdateCustomer/{id}', [MusteriController::class, 'UpdateCustomer'])->name('UpdateCustomer');
     Route::get('/DeleteCustomer/{id}', [MusteriController::class, 'DeleteCustomer'])->name('DeleteCustomer');
     Route::get('/EditCustomer/{id}', [MusteriController::class, 'EditCustomer'])->name('EditCustomer');
+    Route::post('/MusteriBelge/{id}', [MusteriController::class, 'uploadMusteriBelge'])->name('MusteriBelge.upload');
+    Route::get('/MusteriBelge/{id}/{tip}', [MusteriController::class, 'downloadMusteriBelge'])->name('MusteriBelge.download');
+    Route::post('/MusteriBelge/{id}/{tip}/sil', [MusteriController::class, 'deleteMusteriBelge'])->name('MusteriBelge.delete');
     Route::get('/V1Customer', [MusteriController::class, 'V1Customer'])->name('V1Customer');
     Route::get('/V1Change/{id}', [MusteriController::class, 'V1Change'])->name('V1Change');
 
