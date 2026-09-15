@@ -69,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/Agreement', [SozlesmelerController::class, 'Agreement'])->name('Agreement');
     Route::get('/DownloadAgreement/{id}', [SozlesmelerController::class, 'DownloadAgreement'])->name('DownloadAgreement');
     Route::post('/AddAgreement', [SozlesmelerController::class, 'AddAgreement'])->name('AddAgreement');
+    Route::get('/LisansSozlesme/{siparisNo}/{tip}', [SozlesmelerController::class, 'LicenseAgreement'])->name('LicenseAgreement');
 
     //Bayi İşlemleri
     Route::get('/Dealer', [BayiController::class, 'Dealer'])->name('Dealer');

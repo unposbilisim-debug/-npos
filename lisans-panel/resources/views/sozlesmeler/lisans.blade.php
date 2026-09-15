@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $sayfaBaslik }} — {{ $musteri->Unvan }}</title>
+    <style>
+        :root { --navy:#1a237e; --orange:#f89d1d; --ink:#1e293b; --muted:#475569; }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: #e2e8f0;
+            color: var(--ink);
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12.5pt;
+            line-height: 1.45;
+        }
+        .toolbar {
+            position: sticky; top: 0; z-index: 5;
+            display: flex; justify-content: flex-end; gap: 8px;
+            padding: 10px 16px;
+            background: #fff; border-bottom: 1px solid #cbd5e1;
+            font-family: system-ui, sans-serif;
+        }
+        .toolbar button, .toolbar a {
+            border: 1px solid #94a3b8; background: #fff; color: #0f172a;
+            padding: 6px 14px; border-radius: 6px; cursor: pointer;
+            text-decoration: none; font-size: 13px;
+        }
+        .sheet {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 16px auto 32px;
+            background: #fff;
+            padding: 18mm 18mm 16mm;
+            box-shadow: 0 8px 24px rgba(15,23,42,.12);
+        }
+        .head {
+            display: flex; align-items: center; gap: 16px;
+            border-bottom: 3px solid var(--navy);
+            padding-bottom: 12px;
+        }
+        .head img { height: 64px; width: auto; }
+        .head h1 { margin: 0; font-size: 22pt; color: var(--navy); letter-spacing: .04em; }
+        .head .sub { color: var(--orange); font-size: 10pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .meta {
+            display: flex; justify-content: space-between; gap: 16px;
+            margin: 14px 0 18px; font-size: 11pt;
+        }
+        .box { border: 1px solid #cbd5e1; padding: 10px 12px; flex: 1; }
+        .box h3 { margin: 0 0 6px; font-size: 10pt; color: var(--navy); text-transform: uppercase; letter-spacing: .08em; }
+        .box p { margin: 2px 0; }
+        h2.title { text-align: center; font-size: 14pt; margin: 8px 0 16px; }
+        .no { text-align: center; font-size: 10pt; color: var(--muted); margin-top: -10px; margin-bottom: 16px; }
+        p { text-align: justify; margin: 0 0 8px; }
+        ol.madde { padding-left: 1.2em; margin: 0 0 8px; }
+        ol.madde > li { margin-bottom: 8px; }
+        table.kalem {
+            width: 100%; border-collapse: collapse; margin: 8px 0 10px;
+            font-size: 11pt;
+        }
+        table.kalem th, table.kalem td { border: 1px solid #94a3b8; padding: 5px 8px; }
+        table.kalem th { background: #f1f5f9; text-align: left; }
+        .imza {
+            display: flex; gap: 24px; margin-top: 28px;
+        }
+        .imza .col { flex: 1; text-align: center; }
+        .imza .cizgi { margin-top: 48px; border-top: 1px solid #0f172a; padding-top: 6px; }
+        .dip { margin-top: 24px; font-size: 9pt; color: var(--muted); }
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none; }
+            .sheet { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 10mm; }
+        }
+    </style>
+</head>
+<body>
+@php
+    $para = function ($n) { return number_format((float) $n, 2, ',', '.') . ' TL'; };
+    $adres = trim(implode(' ', array_filter([$musteri->Adres, $musteri->Ilce, $musteri->Il])));
+    $paketOzet = collect($aktifPaketler)->pluck('adi')->filter()->unique()->implode(', ');
+    $paketOzet = $paketOzet !== '' ? $paketOzet : 'ilgili yazılım paketi';
+    $sureOzet = collect($aktifPaketler)->pluck('sure')->filter(fn ($s) => $s && $s !== '—')->unique()->implode(', ');
+    $sureOzet = $sureOzet !== '' ? $sureOzet : 'lisans kaydındaki bitiş tarihi';
+@endphp
+<div class="toolbar">
+    <a href="{{ url()->previous() }}">Geri</a>
+    <button type="button" onclick="window.print()">Yazdır</button>
+</div>
+<article class="sheet">
+    <header class="head">
+        <img src="{{ asset('assets/images/unpos-logo.png') }}" alt="ÜnPOS">
+        <div>
+            <div class="sub">Antetli sözleşme</div>
+            <h1>ÜnPOS</h1>
+        </div>
+    </header>
+
+    <div class="meta">
+        <div class="box">
+            <h3>Satıcı / Hizmet veren</h3>
+            <p><strong>ÜnPOS Bilişim</strong></p>
+            <p>Yazılım lisans, bakım ve servis hizmetleri</p>
+            <p>Bayi: {{ $bayiAdi }}</p>
+        </div>
+        <div class="box">
+            <h3>Alıcı / Müşteri</h3>
+            <p><strong>{{ $musteri->Unvan }}</strong></p>
+            @if($musteri->TabelaAdi)<p>Tabela: {{ $musteri->TabelaAdi }}</p>@endif
+            <p>VKN: {{ $musteri->VergiNo ?: '—' }} @if($musteri->VergiDairesi) / {{ $musteri->VergiDairesi }}@endif</p>
+            <p>{{ $adres ?: '—' }}</p>
+            <p>Tel: {{ $musteri->Telefon ?: $musteri->YetkiliGsm ?: '—' }} · E-posta: {{ $musteri->EMail ?: '—' }}</p>
+            @if($musteri->Yetkili)<p>Yetkili: {{ $musteri->Yetkili }}</p>@endif
+        </div>
+    </div>
+
+    <h2 class="title">{{ $sayfaBaslik }}</h2>
+    <p class="no">Sözleşme no: {{ $sozlesmeNo }} · Tarih: {{ $tarih }} · Sipariş: {{ $lisans->SiparisNo }} · PC: {{ $lisans->PcName ?: '—' }}</p>
+
+    <table class="kalem">
+        <thead>
+            <tr>
+                <th>Paket adı</th>
+                <th>Süre / bitiş</th>
+                <th>Tutar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($aktifPaketler as $p)
+                <tr>
+                    <td>{{ $p['adi'] }}</td>
+                    <td>{{ $p['sure'] }}</td>
+                    <td>{{ $p['tutar'] > 0 ? $para($p['tutar']) : '—' }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="3">Bu lisans kaydında aktif paket satırı bulunamadı; konu yine bu sipariş numarasına bağlı yazılımdır.</td>
+                </tr>
+            @endforelse
+            <tr>
+                <td colspan="2"><strong>Toplam (liste bedeli, KDV hariç kayıt)</strong></td>
+                <td><strong>{{ $toplamTutar > 0 ? $para($toplamTutar) : '—' }}</strong></td>
+            </tr>
+        </tbody>
+    </table>
+
+    @if($tip === 'satis')
+        <ol class="madde">
+            <li><strong>Taraflar.</strong> İşbu Yazılım Satış Sözleşmesi bir tarafta ÜnPOS Bilişim (“Satıcı”) ile diğer tarafta yukarıda kimliği yazılı {{ $musteri->Unvan }} (“Alıcı”) arasında, {{ $tarih }} tarihinde, bağlı bayi {{ $bayiAdi }} aracılığıyla akdedilmiştir.</li>
+            <li><strong>Konu.</strong> Sözleşmenin konusu; Alıcı’nın {{ $lisans->PcName ?: 'belirtilen işyeri / kasa' }} ortamında kullanmak üzere {{ $paketOzet }} yazılım lisansının (lisans anahtarı ve kullanım hakkı) satışı ve teslimidir. Kaynak kod, mülkiyet ve marka hakları Satıcı’da kalır; Alıcı’ya münhasır olmayan, devredilemez bir kullanım hakkı tanınır.</li>
+            <li><strong>Bedel.</strong> Lisans bedeli, yukarıdaki paket satırlarında gösterilen tutar üzerinden {{ $toplamTutar > 0 ? $para($toplamTutar) : 'taraflarca ayrıca teyit edilen bedel' }} olarak uygulanır. Aksi yazılı kararlaştırılmadıkça bedel, teslimden önce veya lisansın aktifleştirilmesi ile muaccel olur. Geciken ödemede Satıcı lisansı askıya alabilir.</li>
+            <li><strong>Süre ve teslim.</strong> Lisans, sipariş no {{ $lisans->SiparisNo }} ile tanımlanır. Kullanım süresi paket bitiş tarihi(leri) olan {{ $sureOzet }} ile sınırlıdır. Teslim, lisans anahtarının Alıcı’ya bildirilmesi veya programın aktive edilmesiyle gerçekleşmiş sayılır.</li>
+            <li><strong>Yükümlülükler.</strong> Satıcı, yazılımın lisans kaydına uygun çalışması için makul çabayı gösterir. Alıcı; anahtarı üçüncü kişilere vermez, kopyalamaz, tersine mühendislik yapmaz, işyeri dışında çoğaltmaz. Donanım, işletim sistemi ve internet Alıcı’nın sorumluluğundadır. Ayıplı ifa ihbarı, teslimden itibaren 7 gün içinde yazılı yapılır.</li>
+            <li><strong>Gizlilik.</strong> Taraflar, bu sözleşme ve işin ifası sırasında öğrendikleri ticari, teknik ve müşteri verilerini sözleşme süresince ve sonrasında 3 yıl boyunca gizli tutar; yasal zorunluluk dışında üçüncü kişiye vermez.</li>
+            <li><strong>Yetkili mahkeme.</strong> Bu sözleşmeden doğan uyuşmazlıklarda Türkiye Cumhuriyeti hukuku uygulanır; yetkili mahkeme ve icra daireleri Satıcı’nın faaliyet yerindeki mahkemeler ile Alıcı’nın ticaret sicilindeki merkezinin mahkemeleridir.</li>
+        </ol>
+    @elseif($tip === 'bakim')
+        <ol class="madde">
+            <li><strong>Taraflar.</strong> İşbu Yazılım Bakım Sözleşmesi bir tarafta ÜnPOS Bilişim (“Hizmet Veren”) ile diğer tarafta {{ $musteri->Unvan }} (“Müşteri”) arasında {{ $tarih }} tarihinde akdedilmiştir. Hizmet, bağlı bayi {{ $bayiAdi }} kanalıyla yürütülebilir.</li>
+            <li><strong>Konu.</strong> Konu; Müşteri’nin sipariş no {{ $lisans->SiparisNo }} kapsamındaki {{ $paketOzet }} yazılımı için sürüm güncellemesi, hata giderme ve uzaktan destek hizmetinin sağlanmasıdır. Yeni modül satışı, yerinde kurulum ve donanım tamiri bu sözleşmenin dışında olup servis sözleşmesine tabidir.</li>
+            <li><strong>Bedel.</strong> Bakım bedeli, ilgili paketlerin liste bedeli üzerinden {{ $toplamTutar > 0 ? $para($toplamTutar) : 'taraflarca kararlaştırılan yıllık bakım bedeli' }} esas alınarak uygulanır (KDV hariç kayıt). Ödeme, dönem başında peşin yapılır. Ödenmeyen dönemde bakım ve güncelleme durdurulabilir; lisans kullanımı satış sözleşmesindeki süreye bağlıdır.</li>
+            <li><strong>Süre.</strong> Bakım süresi, paketin bitiş tarihi olan {{ $sureOzet }} tarihine kadar geçerlidir. Süre bitiminde yenilenmezse güncelleme ve destek yükümlülüğü sona erer; yazılımın o ana kadarki sürümü Müşteri’de kalabilir ancak yeni sürüm hakkı doğmaz.</li>
+            <li><strong>Yükümlülükler.</strong> Hizmet Veren, mesai saatleri içinde uzaktan bağlantı ile arızaya makul sürede cevap verir. Müşteri; güncel yedek alır, yetkisiz müdahale etmez, arızayı doğru bildirir ve uzaktan erişime izin verir. Veri kaybından, Müşteri’nin yedeklememesi veya üçüncü kişi müdahalesinden Hizmet Veren sorumlu değildir.</li>
+            <li><strong>Gizlilik.</strong> Destek sırasında görülen satış, stok, cari ve kişisel veriler gizli tutulur; yalnızca arızanın giderilmesi için kullanılır ve yasal saklama dışında kopyalanmaz.</li>
+            <li><strong>Yetkili mahkeme.</strong> Uygulanacak hukuk T.C. hukukudur. Yetkili yargı yeri, Hizmet Veren’in faaliyet yeri ile Müşteri’nin ticaret merkezi mahkemeleri ve icra daireleridir.</li>
+        </ol>
+    @else
+        <ol class="madde">
+            <li><strong>Taraflar.</strong> İşbu Servis Sözleşmesi bir tarafta ÜnPOS Bilişim (“Servis Sağlayıcı”) ile diğer tarafta {{ $musteri->Unvan }} (“Müşteri”) arasında {{ $tarih }} tarihinde, bayi {{ $bayiAdi }} aracılığıyla kurulmuştur.</li>
+            <li><strong>Konu.</strong> Konu; sipariş no {{ $lisans->SiparisNo }} ve {{ $paketOzet }} ile ilişkili yazılım/kasa ortamında yerinde veya uzaktan kurulum, eğitim, arıza tespiti, yapılandırma ve benzeri işçilik hizmetidir. Yedek parça, mali cihaz, işletim sistemi lisansı ve üçüncü kişi cihazları ayrıca faturalanır.</li>
+            <li><strong>Bedel.</strong> Servis bedeli, işin mahiyetine göre paket satırındaki {{ $toplamTutar > 0 ? $para($toplamTutar) : 'keşif veya tarife bedeli' }} üzerinden veya yerinde çalışma için ayrıca bildirilen işçilik ücreti ile tahsil edilir. Yol, konaklama ve parça bedeli Müşteri’ye aittir. İş bitiminde fatura düzenlenir; ödeme vadesi faturada yazılı süredir.</li>
+            <li><strong>Süre.</strong> Bu sözleşme, işin tamamlanmasına veya ilgili lisans/paket bitiş tarihi {{ $sureOzet }} tarihine kadar (hangisi önce ise) geçerlidir. Acil çağrı, mesai dışı çalışma ve tekrarlayan bakım ayrı iş emri sayılır.</li>
+            <li><strong>Yükümlülükler.</strong> Servis Sağlayıcı, işi özenle ve meslek kuralına uygun yapar. Müşteri işyerine giriş, yetkili personel, elektrik/ağ ve mevcut yedekleri sağlar. Müşteri onayı olmadan veri silinmez. Servisten sonra oluşan, Müşteri’nin kullanım hatasından veya başka yazılımdan kaynaklanan arızalar yeni iş kapsamındadır.</li>
+            <li><strong>Gizlilik.</strong> Servis personeli işyerinde gördüğü ticari sır, fiş, cari ve personel bilgilerini gizli tutar; işin bitiminden sonra da 3 yıl bu yükümlülük devam eder.</li>
+            <li><strong>Yetkili mahkeme.</strong> Uyuşmazlıklarda T.C. hukuku uygulanır; yetkili mahkeme ve icra daireleri Servis Sağlayıcı’nın faaliyet yeri ile Müşteri’nin merkezinin bulunduğu yer mahkemeleridir.</li>
+        </ol>
+    @endif
+
+    <p>İşbu sözleşme, {{ $tarih }} tarihinde iki nüsha olarak düzenlenmiş ve taraflarca okunarak kabul edilmiştir.</p>
+
+    <div class="imza">
+        <div class="col">
+            <strong>Satıcı / Hizmet veren</strong>
+            <div>ÜnPOS Bilişim</div>
+            <div class="cizgi">Kaşe / imza</div>
+        </div>
+        <div class="col">
+            <strong>Alıcı / Müşteri</strong>
+            <div>{{ $musteri->Unvan }}</div>
+            <div>{{ $musteri->Yetkili ?: 'Yetkili imza' }}</div>
+            <div class="cizgi">Kaşe / imza</div>
+        </div>
+    </div>
+    <p class="dip">Bu metin genel çerçeve sözleşmesidir; özel şartlar yazılı ek protokolle değiştirilebilir. Yazdırıp imzalayınız.</p>
+</article>
+</body>
+</html>
