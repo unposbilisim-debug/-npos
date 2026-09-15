@@ -17,13 +17,20 @@
                         <select class="form-select" id="customerSelect">
                             <option value="">Lütfen Müşteri Seçin</option>
                             @foreach ($Musteriler as $geldimusteri)
+                            @php
+                                $bagliBayiAdi = optional($geldimusteri->kimbubayi)->Unvan
+                                    ?: ($bayiAdlari[$geldimusteri->Bayi] ?? '');
+                                $bagliBayiLogo = optional($geldimusteri->kimbubayi)->Logo;
+                            @endphp
                             <option value="{{ $geldimusteri->id }}"
                                 data-unvan="{{ $geldimusteri->Unvan }}"
                                 data-telefon="{{ $geldimusteri->Telefon }}"
                                 data-email="{{ $geldimusteri->EMail }}"
                                 data-adres="{{ $geldimusteri->Adres }}"
                                 data-il="{{ $geldimusteri->Il }}"
-                                data-ilce="{{ $geldimusteri->Ilce }}">
+                                data-ilce="{{ $geldimusteri->Ilce }}"
+                                data-bayi="{{ $bagliBayiAdi }}"
+                                data-logo="{{ $bagliBayiLogo ? asset($bagliBayiLogo) : '' }}">
                                 {{ $geldimusteri->Unvan }}
                             </option>
                             @endforeach
@@ -60,11 +67,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const customerSelect = document.getElementById('customerSelect');
     const programSelect = document.getElementById('programSelect');
-    const bayiadi = @json(optional($bayi)->Unvan ?? '');
-    const bayilogo = new Image();
-    @if(!empty(optional($bayi)->Logo))
-    bayilogo.src = "{{ asset($bayi->Logo) }}";
-    @endif
+    const logoCache = {};
 
     const previewCanvas = document.getElementById('previewCanvas1');
     const previewCtx = previewCanvas.getContext('2d');
@@ -89,8 +92,20 @@ document.addEventListener('DOMContentLoaded', function() {
             adres: (opt.dataset.adres || '').trim(),
             il: sehir,
             program: programSelect.value,
-            date: todayStr()
+            date: todayStr(),
+            bayi: (opt.dataset.bayi || '').trim(),
+            logo: (opt.dataset.logo || '').trim()
         };
+    }
+
+    function getLogo(url) {
+        if (!url) return null;
+        if (logoCache[url]) return logoCache[url];
+        const img = new Image();
+        img.onload = updatePreview;
+        img.src = url;
+        logoCache[url] = img;
+        return img;
     }
 
     function wrapLines(ctx, text, maxWidth, maxLines) {
@@ -160,14 +175,21 @@ document.addEventListener('DOMContentLoaded', function() {
         y += lh;
         ctx.fillText('Tarih: ' + data.date, colR, y);
         y += lh;
-        if (bayiadi) {
-            ctx.fillText('Bayi: ' + bayiadi, colR, y);
+        if (data.bayi) {
+            ctx.fillText('Bayi: ' + data.bayi, colR, y);
+            y += font * 0.6;
         }
-
-        if (bayilogo.complete && bayilogo.naturalWidth) {
-            const lw = w * 0.11;
-            const lhLogo = lw * 0.38;
-            ctx.drawImage(bayilogo, w * 0.76, h * 0.655, lw, lhLogo);
+        const logo = getLogo(data.logo);
+        if (logo && logo.complete && logo.naturalWidth) {
+            const maxW = w * 0.14;
+            const maxH = h * 0.07;
+            let drawW = maxW;
+            let drawH = drawW * (logo.naturalHeight / logo.naturalWidth);
+            if (drawH > maxH) {
+                drawH = maxH;
+                drawW = maxH * (logo.naturalWidth / logo.naturalHeight);
+            }
+            ctx.drawImage(logo, colR, y, drawW, drawH);
         }
     }
 
@@ -178,7 +200,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     customerSelect.addEventListener('change', updatePreview);
     programSelect.addEventListener('change', updatePreview);
-    if (bayilogo.src) bayilogo.onload = updatePreview;
 
     document.getElementById('download1').addEventListener('click', function() {
         const data = customerData();
