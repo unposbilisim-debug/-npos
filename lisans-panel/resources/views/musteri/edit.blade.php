@@ -259,7 +259,7 @@
                                 @if (Auth::user()->role == 'admin')
                                 <div class="form-floating mb-3">
                                     <select class="form-select" id="Bayi" name="Bayi">
-                                        <option selected value="{{ $Musteri->Bayi }}">{{ $Musteri->kimbubayi->Unvan ?? 'Bilinmiyor' }}</option>
+                                        <option selected value="{{ $Musteri->Bayi }}">{{ optional($Musteri->kimbubayi)->Unvan ?? 'Bilinmiyor' }}</option>
                                         @foreach ($Bayi as $GeldiBayi)
                                             <option value="{{ $GeldiBayi->id }}">{{ $GeldiBayi->name }}</option>
                                         @endforeach
@@ -441,15 +441,48 @@
                                                             </a>
                                                         @endif
                                                     @endif
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Sözleşme</button>
-                                                        <ul class="dropdown-menu dropdown-menu-end">
-                                                            <li><a class="dropdown-item" target="_blank" href="{{ route('LicenseAgreement', ['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'satis']) }}">Satış</a></li>
-                                                            <li><a class="dropdown-item" target="_blank" href="{{ route('LicenseAgreement', ['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'bakim']) }}">Bakım</a></li>
-                                                            <li><a class="dropdown-item" target="_blank" href="{{ route('LicenseAgreement', ['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'servis']) }}">Servis</a></li>
-                                                        </ul>
-                                                    </div>
                                                 </div>
+                                            </td>
+                                        </tr>
+                                        @php
+                                            $sozPaketler = [];
+                                            $rawLisans = is_string($GeldiLisans->Lisans) ? json_decode($GeldiLisans->Lisans, true) : $GeldiLisans->Lisans;
+                                            $rawLisans = is_array($rawLisans) ? $rawLisans : [];
+                                            foreach ($rawLisans as $item) {
+                                                $bag = [];
+                                                if (isset($item['yazarkasa']) && is_array($item['yazarkasa'])) {
+                                                    $bag = $item['yazarkasa'];
+                                                } elseif (isset($item['paketName'])) {
+                                                    $bag = [$item];
+                                                } elseif (is_array($item)) {
+                                                    $bag = $item;
+                                                }
+                                                foreach ($bag as $px) {
+                                                    if (!is_array($px) || empty($px['paketName'])) continue;
+                                                    if ((int)($px['status'] ?? 0) !== 1) continue;
+                                                    $adi = $px['paketName'];
+                                                    foreach ($LisansPaket as $lp) {
+                                                        if ($lp->PaketName == $px['paketName']) { $adi = $lp->PaketAdi; break; }
+                                                    }
+                                                    $sozPaketler[] = ['name' => $px['paketName'], 'adi' => $adi, 'sure' => $px['date'] ?? ''];
+                                                }
+                                            }
+                                            if (!$sozPaketler) {
+                                                $sozPaketler[] = ['name' => '', 'adi' => ($GeldiLisans->PcName ?: 'Lisans'), 'sure' => ''];
+                                            }
+                                        @endphp
+                                        <tr>
+                                            <td colspan="6" class="bg-light">
+                                                @foreach ($sozPaketler as $sp)
+                                                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 py-1">
+                                                        <span class="small fw-medium">{{ $sp['adi'] }}@if($sp['sure']) <span class="text-muted">· {{ $sp['sure'] }}</span>@endif</span>
+                                                        <span class="small">
+                                                            <a class="me-2" target="_blank" href="{{ route('LicenseAgreement', array_filter(['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'satis', 'paket' => $sp['name'] ?: null])) }}">Satış</a>
+                                                            <a class="me-2" target="_blank" href="{{ route('LicenseAgreement', array_filter(['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'bakim', 'paket' => $sp['name'] ?: null])) }}">Bakım</a>
+                                                            <a target="_blank" href="{{ route('LicenseAgreement', array_filter(['siparisNo' => $GeldiLisans->SiparisNo, 'tip' => 'servis', 'paket' => $sp['name'] ?: null])) }}">Servis</a>
+                                                        </span>
+                                                    </div>
+                                                @endforeach
                                             </td>
                                         </tr>
                                     @endif

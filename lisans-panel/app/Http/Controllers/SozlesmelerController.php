@@ -103,8 +103,9 @@ class SozlesmelerController extends Controller
         return $slug ? route('Agreement', ['tip' => $slug]) : route('Agreement');
     }
 
-    public function LicenseAgreement($siparisNo, $tip)
+    public function LicenseAgreement(Request $request, $siparisNo, $tip)
     {
+        try {
         if (! isset(self::TIP_SLUGS[$tip])) {
             abort(404);
         }
@@ -123,6 +124,7 @@ class SozlesmelerController extends Controller
             }
         }
 
+        $paketFiltre = (string) $request->query('paket', '');
         $paketModelleri = LisansPaketModel::all()->keyBy('PaketName');
         $lisansData = json_decode($lisans->Lisans, true);
         $lisansData = is_array($lisansData) ? $lisansData : [];
@@ -149,6 +151,9 @@ class SozlesmelerController extends Controller
         $toplamTutar = 0.0;
         foreach ($ham as $p) {
             if ((int) ($p['status'] ?? 0) !== 1) {
+                continue;
+            }
+            if ($paketFiltre !== '' && ($p['paketName'] ?? '') !== $paketFiltre) {
                 continue;
             }
             $model = $paketModelleri->get($p['paketName']);
@@ -179,6 +184,11 @@ class SozlesmelerController extends Controller
             'tarih',
             'sozlesmeNo'
         ));
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            abort(404);
+        }
     }
 
     public function DownloadAgreement($id)
