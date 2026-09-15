@@ -87,8 +87,6 @@ class BugunKuyrugu
                         $satir['baslik'] = $pName.' · '.$paket['serial_numbers'][0];
                     }
                     $yazarkasa[] = $satir;
-                } else {
-                    $lisanslar[] = $satir;
                 }
             }
         }

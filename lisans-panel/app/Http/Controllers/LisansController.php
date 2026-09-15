@@ -21,6 +21,18 @@ class LisansController extends Controller
     // YARDIMCI FONKSİYONLAR (Private Helpers)
     // ============================================================================
 
+    private $paketTipiMap = null;
+
+    private function paketTipiAdi(?string $paketName): string
+    {
+        if ($this->paketTipiMap === null) {
+            $this->paketTipiMap = LisansPaketModel::query()->pluck('PaketTipi', 'PaketName')
+                ->map(fn ($t) => strtolower((string) $t));
+        }
+
+        return strtolower((string) ($this->paketTipiMap[$paketName] ?? ''));
+    }
+
     /**
      * Lisans JSON verisini işler, kalan günleri hesaplar ve sıralar.
      */
@@ -67,6 +79,9 @@ class LisansController extends Controller
     private function addItemToProcessedList(&$list, $item, $lisans, $musteriAdi, $bugun)
     {
         try {
+            if ($this->paketTipiAdi($item['paketName'] ?? '') !== 'yazarkasa') {
+                return;
+            }
             $tarih = trim($item['date']);
             // Tarih formatı kontrolü (d.m.Y)
             if (!preg_match('/^\d{2}\.\d{2}\.\d{4}$/', $tarih))

@@ -36,13 +36,20 @@
             box-shadow: 0 8px 24px rgba(15,23,42,.12);
         }
         .head {
-            display: flex; align-items: center; gap: 16px;
+            display: flex; align-items: flex-end; gap: 0;
             border-bottom: 3px solid var(--navy);
             padding-bottom: 12px;
         }
-        .head img { height: 64px; width: auto; }
-        .head h1 { margin: 0; font-size: 22pt; color: var(--navy); letter-spacing: .04em; }
-        .head .sub { color: var(--orange); font-size: 10pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .head .brand { display: flex; flex-direction: column; align-items: flex-start; }
+        .head img { height: 72px; width: auto; display: block; }
+        .head .tagline {
+            margin: 2px 0 0;
+            font-size: 9pt;
+            letter-spacing: .14em;
+            text-transform: lowercase;
+            color: var(--navy);
+            font-family: "Times New Roman", Times, serif;
+        }
         .meta {
             display: flex; justify-content: space-between; gap: 16px;
             margin: 14px 0 18px; font-size: 11pt;
@@ -80,8 +87,8 @@
     $adres = trim(implode(' ', array_filter([$musteri->Adres, $musteri->Ilce, $musteri->Il])));
     $paketOzet = collect($aktifPaketler)->pluck('adi')->filter()->unique()->implode(', ');
     $paketOzet = $paketOzet !== '' ? $paketOzet : 'ilgili yazılım paketi';
-    $sureOzet = collect($aktifPaketler)->pluck('sure')->filter(fn ($s) => $s && $s !== '—')->unique()->implode(', ');
-    $sureOzet = $sureOzet !== '' ? $sureOzet : 'lisans kaydındaki bitiş tarihi';
+    $sureSatirlari = collect($aktifPaketler)->pluck('sure')->filter(fn ($s) => $s && $s !== '—' && $s !== 'Süresiz')->unique();
+    $sureOzet = $sureSatirlari->isNotEmpty() ? $sureSatirlari->implode(', ') : null;
     $siparisOzet = $siparisOzet ?? (optional($lisans)->SiparisNo ?: '—');
     $pcOzet = $pcOzet ?? (optional($lisans)->PcName ?: 'işyeri / kasa');
 @endphp
@@ -91,10 +98,9 @@
 </div>
 <article class="sheet">
     <header class="head">
-        <img src="{{ asset('assets/images/unpos-logo.png') }}" alt="ÜnPOS">
-        <div>
-            <div class="sub">Antetli sözleşme</div>
-            <h1>ÜnPOS</h1>
+        <div class="brand">
+            <img src="{{ asset('assets/images/unpos-logo.png') }}" alt="ünpos">
+            <div class="tagline">yazılım çözümleri</div>
         </div>
     </header>
 
@@ -151,7 +157,7 @@
             <li><strong>Konu — lisans (satış).</strong> Satıcı, Müşteri’ye {{ $pcOzet }} ortamında kullanmak üzere {{ $paketOzet }} yazılımı için münhasır olmayan, devredilemez bir kullanım hakkı (lisans anahtarı) verir. Kaynak kod, mülkiyet ve marka Satıcı’da kalır. Sipariş(ler): {{ $siparisOzet }}.</li>
             <li><strong>Konu — bakım.</strong> Lisans süresi boyunca Satıcı, mesai saatleri içinde uzaktan destek, hata giderme ve yayımlanan sürüm güncellemelerini sağlar. Yeni modül satışı bu maddenin dışındadır. Müşteri güncel yedek alır ve uzaktan erişime izin verir.</li>
             <li><strong>Konu — servis.</strong> Kurulum, eğitim, yerinde veya uzaktan yapılandırma ve arıza tespiti işçilik hizmeti bu sözleşme kapsamındadır. Yedek parça, mali cihaz, işletim sistemi ve üçüncü kişi cihazları ayrıca faturalanır. Yol ve parça bedeli Müşteri’ye aittir.</li>
-            <li><strong>Bedel ve süre.</strong> Bedel, yukarıdaki paket satırlarında gösterilen {{ $toplamTutar > 0 ? $para($toplamTutar) : 'taraflarca teyit edilen' }} tutar esas alınır (KDV hariç kayıt). Kullanım, bakım ve temel destek; paket bitiş tarihi(leri) {{ $sureOzet }} ile sınırlıdır. Geciken ödemede lisans ve hizmet askıya alınabilir. Süre yenilenmezse yeni sürüm ve bakım hakkı sona erer.</li>
+            <li><strong>Bedel ve süre.</strong> Bedel, yukarıdaki paket satırlarında gösterilen {{ $toplamTutar > 0 ? $para($toplamTutar) : 'taraflarca teyit edilen' }} tutar esas alınır (KDV hariç kayıt). Ana yazılım paketi süresizdir; bitiş tarihi ve kalan gün uygulanmaz. @if($sureOzet)Yazar kasa paketlerinde süre {{ $sureOzet }} ile sınırlıdır.@else Yazar kasa paketi yoksa veya süresi kayıtlı değilse ayrıca kararlaştırılır.@endif Geciken ödemede ilgili hizmet askıya alınabilir.</li>
             <li><strong>Yükümlülükler.</strong> Müşteri anahtarı üçüncü kişiye vermez, kopyalamaz, tersine mühendislik yapmaz. Donanım, işletim sistemi, internet ve yedekleme Müşteri’nin sorumluluğundadır. Satıcı işi özenle yapar; Müşteri’nin yedeklememesi, yetkisiz müdahalesi veya başka yazılımdan doğan veri kaybından sorumlu değildir. Ayıp ihbarı teslimden itibaren 7 gün içinde yazılı yapılır.</li>
             <li><strong>Gizlilik.</strong> Taraflar; satış, stok, cari, fiş ve kişisel verileri sözleşme süresince ve sonrasında 3 yıl gizli tutar. Destek/servis sırasında görülen veriler yalnızca işin ifası için kullanılır.</li>
             <li><strong>Yetkili mahkeme.</strong> Uygulanacak hukuk T.C. hukukudur. Yetkili mahkeme ve icra daireleri Satıcı’nın faaliyet yeri ile Müşteri’nin ticaret merkezinin bulunduğu yer mahkemeleridir.</li>

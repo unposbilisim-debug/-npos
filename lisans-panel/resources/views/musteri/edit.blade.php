@@ -574,10 +574,14 @@
                                                                                         >
                                                                                 </td>
                                                                                 <td class="pe-4 align-middle">
+                                                                                    @if($paket->PaketTipi == 'yazarkasa')
                                                                                     <input type="date" class="form-control form-control-sm"
                                                                                         name="tarihler[{{ $paket->PaketName }}]"
                                                                                         value="{{ $programDate }}" 
                                                                                         {{ !$isChecked ? 'disabled' : '' }}>
+                                                                                    @else
+                                                                                    <span class="fw-semibold">Süresiz</span>
+                                                                                    @endif
                                                                                 </td>
                                                                             </tr>
 
@@ -2609,8 +2613,8 @@
                 });
             }
             
-            // Tarih Otomatik Doldurma
-            if (isEnabled && dateInput && !dateInput.value) {
+            // Tarih Otomatik Doldurma (yalnız yazar kasa)
+            if (isEnabled && dateInput && !dateInput.value && checkbox.getAttribute('data-paket-tipi') === 'yazarkasa') {
                 const today = new Date();
                 const nextYear = new Date(today);
                 nextYear.setFullYear(today.getFullYear() + 1);

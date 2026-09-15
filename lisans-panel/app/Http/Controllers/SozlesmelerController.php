@@ -181,9 +181,10 @@ class SozlesmelerController extends Controller
                     $model = $paketModelleri->get($p['paketName']);
                     $fiyat = $model ? (float) $model->PaketFiyati : 0.0;
                     $toplamTutar += $fiyat;
+                    $yazarkasaMi = $model && strtolower((string) $model->PaketTipi) === 'yazarkasa';
                     $aktifPaketler[] = [
                         'adi' => $model->PaketAdi ?? $p['paketName'],
-                        'sure' => $p['date'] ?? '—',
+                        'sure' => $yazarkasaMi ? ($p['date'] ?? '—') : 'Süresiz',
                         'tutar' => $fiyat,
                     ];
                 }
