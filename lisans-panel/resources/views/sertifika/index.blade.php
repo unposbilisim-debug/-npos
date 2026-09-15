@@ -30,7 +30,8 @@
                                 data-il="{{ $geldimusteri->Il }}"
                                 data-ilce="{{ $geldimusteri->Ilce }}"
                                 data-bayi="{{ $bagliBayiAdi }}"
-                                data-logo="{{ $bagliBayiLogo ? asset($bagliBayiLogo) : '' }}">
+                                data-logo="{{ $bagliBayiLogo ? asset($bagliBayiLogo) : '' }}"
+                                data-tarih="{{ $lisansTarihleri[$geldimusteri->id] ?? '' }}">
                                 {{ $geldimusteri->Unvan }}
                             </option>
                             @endforeach
@@ -75,11 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
     bg.src = "{{ asset('Sertifika/1.jpg') }}";
     bg.onload = updatePreview;
 
-    function todayStr() {
-        const d = new Date();
-        return d.getFullYear() + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + ('0' + d.getDate()).slice(-2);
-    }
-
     function customerData() {
         const opt = customerSelect.options[customerSelect.selectedIndex];
         const il = (opt.dataset.il || '').trim();
@@ -92,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
             adres: (opt.dataset.adres || '').trim(),
             il: sehir,
             program: programSelect.value,
-            date: todayStr(),
+            date: (opt.dataset.tarih || '').trim(),
             bayi: (opt.dataset.bayi || '').trim(),
             logo: (opt.dataset.logo || '').trim()
         };
@@ -173,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
         y += lh;
         ctx.fillText('İl: ' + (data.il || '—'), colR, y);
         y += lh;
-        ctx.fillText('Tarih: ' + data.date, colR, y);
+        ctx.fillText('Tarih: ' + (data.date || '—'), colR, y);
         y += lh;
         if (data.bayi) {
             ctx.fillText('Bayi: ' + data.bayi, colR, y);
