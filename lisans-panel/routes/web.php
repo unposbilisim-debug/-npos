@@ -214,6 +214,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/ProgramPackages', [ProgramPaketleriController::class, 'ProgramPackages'])->name('ProgramPackages');
     Route::post('/AddProgramPackages', [ProgramPaketleriController::class, 'AddProgramPackages'])->name('AddProgramPackages');
     Route::post('/UpdateProgramPackages/{id}', [ProgramPaketleriController::class, 'UpdateProgramPackages'])->name('UpdateProgramPackages');
+    Route::post('/DeleteProgramPackages/{id}', [ProgramPaketleriController::class, 'DeleteProgramPackages'])->name('DeleteProgramPackages');
 
     //Log İşlemleri
     // Route::get('/Log', [LogController::class, 'Log'])->name('Log');
