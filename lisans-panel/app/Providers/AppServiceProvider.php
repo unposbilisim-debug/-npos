@@ -22,7 +22,6 @@ class AppServiceProvider extends ServiceProvider
                 'toplam' => 0,
                 'lisans_sayisi' => 0,
                 'yazarkasa_sayisi' => 0,
-                'teklif_sayisi' => 0,
                 'onizleme' => [],
             ];
 

@@ -6,10 +6,10 @@ Bu klasör, o Laravel uygulamasının Desk dilimine ait dosyaların kopyasıdır
 
 ## Bu dilimde ne var
 
-- Desk iş kuyruğu: 90 güne giren lisans, 90 güne giren yazar kasa, bekleyen teklif
-- Bildirim zili bu kuyruğa bağlı
+- Desk: sıkı KPI şeridi + kısa 90 günlük lisans/yazar kasa bloğu (teklif yok; teklif yalnızca `/OfferList`)
+- Zil yalnızca yaklaşan süreler; teklif sayısı rozet değil
 - `/dashboard` → `/Desk` (bayi için `/agent/dashboard`)
-- Grafik birimi (`bin` / `Mn`, `B` yok) ve “aktif lisans = paket satırı” dipnotu
+- Grafik birimi (`bin` / `Mn`) ve “aktif paket = paket satırı” dipnotu
 
 ## Yayın
 

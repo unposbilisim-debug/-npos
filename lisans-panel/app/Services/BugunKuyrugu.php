@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\LisansModel;
-use App\Models\Teklif;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -14,7 +13,7 @@ class BugunKuyrugu
     private const YAZARKASA_PAKETLER = ['pavo', 'inpos', 'hugin', 'beko'];
 
     /**
-     * Admin Desk + bildirim zili için 90 günlük iş kuyruğu.
+     * Desk + zil: yalnızca 90 güne giren lisans ve yazar kasa. Teklif yok.
      */
     public function forAdmin(bool $useCache = true): array
     {
@@ -22,7 +21,7 @@ class BugunKuyrugu
             return $this->build();
         }
 
-        return Cache::remember('bugun_kuyrugu_admin', 60, fn () => $this->build());
+        return Cache::remember('bugun_kuyrugu_sureler_v2', 60, fn () => $this->build());
     }
 
     public function ozet(): array
@@ -33,13 +32,13 @@ class BugunKuyrugu
             'toplam' => $full['toplam'],
             'lisans_sayisi' => $full['lisans_sayisi'],
             'yazarkasa_sayisi' => $full['yazarkasa_sayisi'],
-            'teklif_sayisi' => $full['teklif_sayisi'],
-            'onizleme' => array_slice($full['ogeler'], 0, 8),
+            'onizleme' => array_slice($full['ogeler'], 0, 6),
         ];
     }
 
     public function forget(): void
     {
+        Cache::forget('bugun_kuyrugu_sureler_v2');
         Cache::forget('bugun_kuyrugu_admin');
     }
 
@@ -94,33 +93,17 @@ class BugunKuyrugu
             }
         }
 
-        $teklifler = [];
-        foreach (Teklif::query()->where('durum', 'beklemede')->orderByDesc('id')->get() as $teklif) {
-            $teklifler[] = [
-                'tur' => 'teklif',
-                'musteri' => $teklif->musteri ?: 'Müşteri yok',
-                'bayi' => '',
-                'baslik' => $teklif->baslik ?: ('Teklif '.$teklif->teklif_no),
-                'bitisTarihi' => optional($teklif->tarih)->format('d.m.Y'),
-                'kalanGun' => null,
-                'tutar' => (float) $teklif->genel_toplam,
-                'url' => route('OfferList'),
-            ];
-        }
-
         usort($lisanslar, fn ($a, $b) => $a['kalanGun'] <=> $b['kalanGun']);
         usort($yazarkasa, fn ($a, $b) => $a['kalanGun'] <=> $b['kalanGun']);
 
-        $ogeler = array_merge($lisanslar, $yazarkasa, $teklifler);
+        $ogeler = array_merge($lisanslar, $yazarkasa);
 
         return [
             'lisanslar' => $lisanslar,
             'yazarkasa' => $yazarkasa,
-            'teklifler' => $teklifler,
             'ogeler' => $ogeler,
             'lisans_sayisi' => count($lisanslar),
             'yazarkasa_sayisi' => count($yazarkasa),
-            'teklif_sayisi' => count($teklifler),
             'toplam' => count($ogeler),
             'pencere' => self::WINDOW_DAYS,
         ];

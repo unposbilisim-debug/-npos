@@ -174,24 +174,24 @@
         @php
           $bell = $bugunKuyruguBell ?? ['toplam' => 0, 'onizleme' => []];
           $bellToplam = (int) ($bell['toplam'] ?? 0);
-          $bellTur = ['lisans' => 'Lisans', 'yazarkasa' => 'Yazar kasa', 'teklif' => 'Teklif'];
+          $bellTur = ['lisans' => 'Lisans', 'yazarkasa' => 'Yazar kasa'];
         @endphp
         <li class="nav-item dropdown d-flex align-items-center">
           <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative text-secondary d-flex align-items-center justify-content-center" data-bs-auto-close="outside"
-            data-bs-toggle="dropdown" href="javascript:;" style="width: 40px; height: 40px;" title="Bugün / yaklaşan kuyruk">
+            data-bs-toggle="dropdown" href="javascript:;" style="width: 40px; height: 40px;" title="Yaklaşan süreler">
             <i class="material-icons-outlined fs-4">notifications</i>
             @if($bellToplam > 0)
               <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">{{ $bellToplam > 99 ? '99+' : $bellToplam }}</span>
             @endif
           </a>
-          <div class="dropdown-menu dropdown-notify dropdown-menu-end shadow border-0 rounded-4" style="min-width: 320px;">
-            <div class="px-3 py-3 d-flex align-items-center justify-content-between border-bottom">
-              <h6 class="fw-bold mb-0">Bugün / yaklaşan</h6>
-              @if(($bellToplam > 0) || (Auth::user()->role ?? null) === 'admin')
+          <div class="dropdown-menu dropdown-notify dropdown-menu-end shadow border-0 rounded-4" style="min-width: 280px;">
+            <div class="px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
+              <h6 class="fw-bold mb-0">Yaklaşan süreler</h6>
+              @if((Auth::user()->role ?? null) === 'admin')
                 <a href="{{ route('Desk') }}" class="small">Desk</a>
               @endif
             </div>
-            <div class="notify-list" style="max-height: 360px; overflow: auto;">
+            <div class="notify-list">
               @forelse(($bell['onizleme'] ?? []) as $oge)
                 <a href="{{ $oge['url'] }}" class="d-block px-3 py-2 text-decoration-none text-dark border-bottom">
                   <div class="d-flex justify-content-between gap-2">
@@ -200,9 +200,7 @@
                   </div>
                   <div class="small text-muted text-truncate">
                     {{ $oge['baslik'] }}
-                    @if($oge['tur'] === 'teklif')
-                      · beklemede
-                    @elseif(isset($oge['kalanGun']) && $oge['kalanGun'] < 0)
+                    @if(isset($oge['kalanGun']) && $oge['kalanGun'] < 0)
                       · {{ abs($oge['kalanGun']) }} gün geçti
                     @elseif(isset($oge['kalanGun']))
                       · {{ $oge['kalanGun'] }} gün
@@ -210,16 +208,11 @@
                   </div>
                 </a>
               @empty
-                <div class="text-center py-5">
-                  <p class="mb-0 text-muted small">Kuyruk boş.</p>
+                <div class="px-3 py-3">
+                  <p class="mb-0 text-muted small">90 gün içinde yaklaşan lisans veya yazar kasa yok.</p>
                 </div>
               @endforelse
             </div>
-            @if($bellToplam > 0)
-              <div class="px-3 py-2 border-top">
-                <a href="{{ route('Desk') }}" class="small">Tüm kuyruğu Desk’te aç</a>
-              </div>
-            @endif
           </div>
         </li>
 
