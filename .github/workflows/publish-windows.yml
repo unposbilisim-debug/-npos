@@ -26,16 +26,27 @@ jobs:
       - name: Prepare source tree
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path kaynak | Out-Null
-          robocopy . kaynak /E /NFL /NDL /NJH /NJS /XD .git bin obj .vs publish dist kaynak /XF *.user
-          if ($LASTEXITCODE -ge 8) { throw "robocopy failed: $LASTEXITCODE" }
+          function Copy-Source($src, $dst) {
+            New-Item -ItemType Directory -Force -Path $dst | Out-Null
+            Get-ChildItem -LiteralPath $src -Force | ForEach-Object {
+              if ($_.Name -in @('.git','bin','obj','.vs','publish','dist','kaynak')) { return }
+              $target = Join-Path $dst $_.Name
+              if ($_.PSIsContainer) { Copy-Source $_.FullName $target }
+              else { Copy-Item -LiteralPath $_.FullName -Destination $target -Force }
+            }
+          }
+          Copy-Source (Get-Location) kaynak
 
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
       - name: Build Setup.exe
+        shell: pwsh
         run: |
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" setup\akaryakit-proje.iss
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe" }
+          & $iscc setup\akaryakit-proje.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed: $LASTEXITCODE" }
 
       - name: Pack desktop folder
         shell: pwsh
