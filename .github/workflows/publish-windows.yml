@@ -12,6 +12,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+
       - name: Publish self-contained EXE
         run: >
           dotnet publish src/UnposVardiyaTakip.Win/UnposVardiyaTakip.Win.csproj
@@ -20,16 +21,39 @@ jobs:
           -p:IncludeNativeLibrariesForSelfExtract=true
           -p:EnableCompressionInSingleFile=true
           -p:DebugType=None -p:DebugSymbols=false
-      - name: Zip
+          -o publish
+
+      - name: Prepare source tree
         shell: pwsh
         run: |
-          $out = "dist/UnposVardiyaTakip"
-          New-Item -ItemType Directory -Force -Path "$out/samples" | Out-Null
-          Copy-Item src/UnposVardiyaTakip.Win/bin/Release/net8.0-windows/win-x64/publish/UnposVardiyaTakip.exe $out/
+          New-Item -ItemType Directory -Force -Path kaynak | Out-Null
+          robocopy . kaynak /E /NFL /NDL /NJH /NJS /XD .git bin obj .vs publish dist kaynak /XF *.user
+          if ($LASTEXITCODE -ge 8) { throw "robocopy failed: $LASTEXITCODE" }
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build Setup.exe
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" setup\akaryakit-proje.iss
+
+      - name: Pack desktop folder
+        shell: pwsh
+        run: |
+          $out = "dist/Akaryakit Proje"
+          New-Item -ItemType Directory -Force -Path "$out/samples","$out/Kaynak" | Out-Null
+          Copy-Item publish/UnposVardiyaTakip.exe $out/
           Copy-Item samples/* "$out/samples/"
-          Compress-Archive -Path $out\* -DestinationPath UnposVardiyaTakip.zip -Force
+          Copy-Item OKU.txt $out/
+          Copy-Item MasaustuneKur.bat $out/
+          Copy-Item -Recurse -Force kaynak/* "$out/Kaynak/"
+          Copy-Item dist/AkaryakitProje-Setup.exe dist/ -ErrorAction SilentlyContinue
+          Compress-Archive -Path $out -DestinationPath dist/AkaryakitProje-Masaustu.zip -Force
+
       - uses: actions/upload-artifact@v4
         with:
-          name: UnposVardiyaTakip
-          path: UnposVardiyaTakip.zip
+          name: AkaryakitProje
+          path: |
+            dist/AkaryakitProje-Setup.exe
+            dist/AkaryakitProje-Masaustu.zip
           if-no-files-found: error

@@ -1,0 +1,32 @@
+AKARYAKIT PROJE
+ünpos Vardiya takip
+
+BU KLASOR NE?
+-------------
+UnposVardiyaTakip.exe   Program (cift tikla calistir)
+samples\                Ornek Turpak / Asis vardiya dosyalari
+Kaynak\                 Tum kaynak kod (Visual Studio)
+Kaynak\UnposVardiyaTakip.sln
+
+KURULUM
+-------
+1) AkaryakitProje-Setup.exe calistirin.
+   Varsayilan yer: Masaustu\Akaryakit Proje
+2) Veya bu klasoru oldugu gibi Masaustu\Akaryakit Proje icine kopyalayin.
+
+ILK DENEME
+----------
+Programi acin -> "Ornek vardiya yukle"
+
+SAHADA KULLANIM
+---------------
+Otomasyon PC'de Turpak/Asis klasorunu paylasin: \\OTOMASYON-PC\shift
+Ayarlar'a bu yolu yazin. Vardiya kapaninca rapor gelir.
+
+KAYNAK KOD
+----------
+Kaynak\UnposVardiyaTakip.sln dosyasini Visual Studio 2022 ile acin.
+Baslangic projesi: UnposVardiyaTakip.Win
+.NET 8 Desktop workload gerekir.
+
+Unpos POS'tan bagimsizdir. Otomasyona yazmaz.

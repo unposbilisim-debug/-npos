@@ -1,41 +1,33 @@
-# ünpos Vardiya takip
+# Akaryakıt Proje — ünpos Vardiya takip
 
-Ünpos POS'tan **bağımsız** C# WinForms masaüstü programı. Türpak XML ve Asis text dosyalarını otomasyon PC'sindeki paylaşılan klasörden okur; raporlama başka bir Windows PC'de yapılır.
+Ünpos POS'tan bağımsız C# WinForms programı. Türpak XML ve Asis text dosyalarını otomasyon klasöründen okur, başka PC'de vardiya raporu üretir.
 
-Otomasyon yazılımına yazmaz. SQL'e bağlanmaz. Sadece export klasörünü izler.
+## Masaüstüne kurulum
 
-## Kurulum (raporlama PC)
+Hazır paket GitHub Actions artifact'ında:
 
-Windows'ta .NET 8 Desktop Runtime veya SDK gerekir.
+1. [Actions](https://github.com/unposbilisim-debug/-npos/actions) → **Windows EXE**
+2. **AkaryakitProje** indirin
+3. `AkaryakitProje-Setup.exe` çalıştırın  
+   Varsayılan klasör: **Masaüstü\Akaryakit Proje**
 
-```bat
-start.bat
-```
+Setup şunları koyar:
 
-veya Visual Studio ile `UnposVardiyaTakip.sln` açın, `UnposVardiyaTakip.Win` başlatın.
+- `UnposVardiyaTakip.exe` — program
+- `samples\` — örnek vardiya dosyaları
+- `Kaynak\` — tüm kaynak kod (Visual Studio)
 
-Yayımlama (hazır EXE):
+Zip ile: `AkaryakitProje-Masaustu.zip` açın, içindeki `MasaustuneKur.bat` çalıştırın.
 
-```bat
-dotnet publish src\UnposVardiyaTakip.Win\UnposVardiyaTakip.Win.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
-```
+## Visual Studio
 
-GitHub Actions her push’ta `UnposVardiyaTakip.zip` üretir: **Actions** sekmesi → son workflow → **UnposVardiyaTakip** artifact.
-
+`Kaynak\UnposVardiyaTakip.sln` veya depodaki `UnposVardiyaTakip.sln`  
+Başlangıç projesi: **UnposVardiyaTakip.Win** (.NET 8 Desktop)
 
 ## Kullanım
 
-1. Otomasyon PC'de Türpak/Asis export klasörünü **salt okunur** paylaşın: `\\OTOMASYON-PC\shift`
-2. Bu programı ofis/kasa PC'sinde çalıştırın
-3. **Ayarlar**'a paylaşım yolunu yazın
-4. **Örnek vardiya yükle** ile `samples/` dosyalarını deneyin
-5. Kasiyer vardiyayı kapatınca dosya klasöre düşer, icmal otomatik gelir
+1. Otomasyon PC'de klasörü paylaşın: `\\OTOMASYON-PC\shift`
+2. Programda **Ayarlar**'a yolu yazın
+3. İlk deneme: **Örnek vardiya yükle**
 
-## Raporlar
-
-- Yakıt / ödeme / pompacı icmali
-- Tabanca endeks farkı
-- Satış listesi
-- Excel ve yazdırma
-
-Türpak tam sayı litre/tutar için varsayılan bölen 100'dür (4560 → 45,60 L). Ayarlardan değiştirilir.
+Otomasyona yazmaz. SQL'e bağlanmaz.
