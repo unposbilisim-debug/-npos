@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Sales Istasyon="Ünye Shell" VardiyaNo="2" Tarih="2026-09-10">
+  <Sale Pompa="1" Tabanca="1" Yakit="MOTORIN" Miktar="1800" Tutar="90000" Pompaci="Ali" Odeme="100" Tarih="2026-09-10T14:10:00"/>
+  <Sale Pompa="1" Tabanca="2" Yakit="KURŞUNSUZ 95" Miktar="900" Tutar="49500" Pompaci="Ali" Odeme="101" Tarih="2026-09-10T14:22:11"/>
+</Sales>
