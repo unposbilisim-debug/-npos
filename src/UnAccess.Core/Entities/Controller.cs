@@ -12,4 +12,9 @@ public sealed class Controller
     public string? SerialNumber { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime? LastSeenAt { get; set; }
+    public string ConnectionStatus { get; set; } = "Unknown";
+    public DateTime? LastSuccessfulSyncAtUtc { get; set; }
+    public DateTime? LastSyncAttemptAtUtc { get; set; }
+    public string? LastError { get; set; }
+    public bool IsSimulation { get; set; }
 }

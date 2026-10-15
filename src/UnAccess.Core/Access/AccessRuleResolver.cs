@@ -35,6 +35,15 @@ public sealed class AccessCardSnapshot
     public DateOnly? ValidUntil { get; init; }
 }
 
+public sealed class AssignedAccess
+{
+    public bool IsAllowed { get; init; }
+    public int RuleId { get; init; }
+    public int TimeScheduleId { get; init; }
+    public MatchedRuleType RuleType { get; init; }
+    public IReadOnlyList<TimeWindow> Windows { get; init; } = [];
+}
+
 public sealed class AccessRuleSnapshot
 {
     public int RuleId { get; init; }
@@ -113,6 +122,38 @@ public static class AccessRuleResolver
 
         return Finish(snapshot, card, false, NoPermissionReason, MatchedRuleType.None, null, null, "");
     }
+
+    public static AssignedAccess? Assign(AccessSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        foreach (var level in Levels(snapshot))
+        {
+            var candidates = level.Rules.OrderBy(rule => rule.RuleId).ToList();
+            if (candidates.Count == 0)
+                continue;
+
+            var usable = candidates.Where(rule => rule.ScheduleIsActive).ToList();
+            var deny = usable.FirstOrDefault(rule => !rule.IsAllowed);
+            if (deny != null)
+                return Describe(deny, level.Type, allowed: false);
+            var allow = usable.FirstOrDefault(rule => rule.IsAllowed);
+            if (allow != null)
+                return Describe(allow, level.Type, allowed: true);
+            return Describe(candidates[0], level.Type, allowed: false);
+        }
+
+        return null;
+    }
+
+    private static AssignedAccess Describe(AccessRuleSnapshot rule, MatchedRuleType type, bool allowed) =>
+        new()
+        {
+            IsAllowed = allowed,
+            RuleId = rule.RuleId,
+            TimeScheduleId = rule.TimeScheduleId,
+            RuleType = type,
+            Windows = rule.Windows
+        };
 
     private static IEnumerable<(MatchedRuleType Type, IReadOnlyList<AccessRuleSnapshot> Rules)> Levels(AccessSnapshot snapshot)
     {

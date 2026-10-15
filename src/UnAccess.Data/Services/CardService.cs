@@ -13,9 +13,16 @@ namespace UnAccess.Data.Services;
 
 internal sealed class CardService : ServiceBase, ICardService
 {
-    public CardService(IDbContextFactory<UnAccessDbContext> factory, AuditWriter audit, ILogger<CardService> logger)
+    private readonly IDeviceSyncOutbox _outbox;
+
+    public CardService(
+        IDbContextFactory<UnAccessDbContext> factory,
+        AuditWriter audit,
+        ILogger<CardService> logger,
+        IDeviceSyncOutbox outbox)
         : base(factory, audit, logger)
     {
+        _outbox = outbox;
     }
 
     public Task<IReadOnlyList<CardListItem>> SearchAsync(CardSearchCriteria criteria, CancellationToken cancellationToken)
@@ -95,6 +102,8 @@ internal sealed class CardService : ServiceBase, ICardService
                 Description = description
             };
             db.Cards.Add(entity);
+            await db.SaveChangesAsync(ct);
+            await _outbox.EnqueueCardAsync(db, entity, remove: false, ct);
             return entity;
         }, saved => new AuditEntry
         {
@@ -150,6 +159,10 @@ internal sealed class CardService : ServiceBase, ICardService
             departmentName = person.d.Name;
             oldSnapshot = AuditSnapshots.Card(existing);
             existing.Status = status;
+            if (status is CardStatus.Lost or CardStatus.Cancelled)
+                await _outbox.EnqueueCardAsync(db, existing, remove: true, ct);
+            else if (status == CardStatus.Active)
+                await _outbox.EnqueueCardAsync(db, existing, remove: false, ct);
             return existing;
         }, saved => new AuditEntry
         {

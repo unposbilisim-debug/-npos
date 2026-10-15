@@ -28,7 +28,10 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<AuditWriter>();
+        services.AddSingleton<IUtcClock, SystemUtcClock>();
+        services.AddSingleton(DeviceSyncOptionsReader.Read(configuration));
         services.AddSingleton<IHospitalClock, HospitalClock>();
+        services.AddSingleton<IDeviceSyncOutbox, DeviceSyncOutbox>();
         services.AddSingleton<ITimeScheduleEvaluator, TimeScheduleEvaluator>();
         services.AddTransient<IPersonnelService, PersonnelService>();
         services.AddTransient<IAccessDecisionService, AccessDecisionService>();
@@ -41,6 +44,9 @@ public static class DependencyInjection
         services.AddTransient<IHospitalStructureService, HospitalStructureService>();
         services.AddTransient<IControllerQueryService, ControllerQueryService>();
         services.AddTransient<IAuditService, AuditService>();
+        services.AddTransient<IDevicePermissionProjectionService, DevicePermissionProjectionService>();
+        services.AddTransient<IDeviceSyncProcessor, DeviceSyncProcessor>();
+        services.AddTransient<IDeviceSyncService, DeviceSyncService>();
         services.AddTransient<DatabaseInitializer>();
         return services;
     }

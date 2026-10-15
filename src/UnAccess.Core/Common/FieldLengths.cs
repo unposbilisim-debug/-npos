@@ -29,4 +29,7 @@ public static class FieldLengths
     public const int Reason = 1000;
     public const int RawData = 4000;
     public const int TimeZoneId = 64;
+    public const int SyncOperation = 64;
+    public const int SyncPayload = 4000;
+    public const int ConnectionStatus = 32;
 }

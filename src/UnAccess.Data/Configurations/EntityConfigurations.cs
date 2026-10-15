@@ -136,6 +136,10 @@ internal sealed class DoorConfiguration : IEntityTypeConfiguration<Door>
         builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("UX_Doors_Code");
         builder.HasIndex(x => x.ZoneId).HasDatabaseName("IX_Doors_ZoneId");
         builder.HasIndex(x => x.ControllerId).HasDatabaseName("IX_Doors_ControllerId");
+        builder.HasIndex(x => new { x.ControllerId, x.ChannelNumber })
+            .IsUnique()
+            .HasFilter("[IsActive] = 1 AND [ControllerId] IS NOT NULL")
+            .HasDatabaseName("UX_Doors_Controller_Channel_Active");
         builder.HasOne(x => x.Zone)
             .WithMany()
             .HasForeignKey(x => x.ZoneId)
@@ -162,6 +166,8 @@ internal sealed class ControllerConfiguration : IEntityTypeConfiguration<Control
         builder.Property(x => x.IpAddress).IsRequired().HasMaxLength(FieldLengths.IpAddress);
         builder.Property(x => x.SerialNumber).HasMaxLength(FieldLengths.SerialNumber);
         builder.HasIndex(x => x.Code).IsUnique().HasDatabaseName("UX_Controllers_Code");
+        builder.Property(x => x.ConnectionStatus).IsRequired().HasMaxLength(FieldLengths.ConnectionStatus);
+        builder.Property(x => x.LastError).HasMaxLength(FieldLengths.Reason);
     }
 }
 

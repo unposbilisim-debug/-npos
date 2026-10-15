@@ -13,9 +13,16 @@ namespace UnAccess.Data.Services;
 
 internal sealed class AccessGroupService : ServiceBase, IAccessGroupService
 {
-    public AccessGroupService(IDbContextFactory<UnAccessDbContext> factory, AuditWriter audit, ILogger<AccessGroupService> logger)
+    private readonly IDeviceSyncOutbox _outbox;
+
+    public AccessGroupService(
+        IDbContextFactory<UnAccessDbContext> factory,
+        AuditWriter audit,
+        ILogger<AccessGroupService> logger,
+        IDeviceSyncOutbox outbox)
         : base(factory, audit, logger)
     {
+        _outbox = outbox;
     }
 
     public Task<IReadOnlyList<AccessGroupListItem>> ListAsync(CancellationToken cancellationToken)
@@ -238,6 +245,7 @@ internal sealed class AccessGroupService : ServiceBase, IAccessGroupService
                 entity.IsActive = false;
             }
 
+            await _outbox.EnqueueGroupPermissionsAsync(db, accessGroupId, ct);
             return entity;
         }, saved => new AuditEntry
         {
@@ -302,6 +310,7 @@ internal sealed class AccessGroupService : ServiceBase, IAccessGroupService
                 entity.IsActive = false;
             }
 
+            await _outbox.EnqueueGroupPermissionsAsync(db, accessGroupId, ct);
             return entity;
         }, saved => new AuditEntry
         {
@@ -337,9 +346,16 @@ internal sealed class AccessGroupService : ServiceBase, IAccessGroupService
 
 internal sealed class TimeScheduleService : ServiceBase, ITimeScheduleService
 {
-    public TimeScheduleService(IDbContextFactory<UnAccessDbContext> factory, AuditWriter audit, ILogger<TimeScheduleService> logger)
+    private readonly IDeviceSyncOutbox _outbox;
+
+    public TimeScheduleService(
+        IDbContextFactory<UnAccessDbContext> factory,
+        AuditWriter audit,
+        ILogger<TimeScheduleService> logger,
+        IDeviceSyncOutbox outbox)
         : base(factory, audit, logger)
     {
+        _outbox = outbox;
     }
 
     public Task<IReadOnlyList<TimeScheduleListItem>> ListAsync(CancellationToken cancellationToken)
@@ -453,6 +469,8 @@ internal sealed class TimeScheduleService : ServiceBase, ITimeScheduleService
                 detail.IsActive = true;
             }
 
+            if (entity.Id > 0)
+                await _outbox.EnqueueSchedulePermissionsAsync(db, entity.Id, ct);
             return entity;
         }, schedule => new AuditEntry
         {

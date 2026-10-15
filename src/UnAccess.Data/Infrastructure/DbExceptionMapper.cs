@@ -59,6 +59,8 @@ internal static class DbExceptionMapper
             return "Bu bölge kodu aynı katta zaten kayıtlı.";
         if (sqlMessage.Contains("UX_Doors_Code", StringComparison.OrdinalIgnoreCase))
             return "Bu kapı kodu zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_Doors_Controller_Channel_Active", StringComparison.OrdinalIgnoreCase))
+            return "Bu kanal aynı kontrolörde başka bir aktif kapıya atanmış.";
         if (sqlMessage.Contains("UX_AccessGroups_Code", StringComparison.OrdinalIgnoreCase))
             return "Bu yetki grubu kodu zaten kayıtlı.";
         if (sqlMessage.Contains("UX_TimeSchedules_Code", StringComparison.OrdinalIgnoreCase))

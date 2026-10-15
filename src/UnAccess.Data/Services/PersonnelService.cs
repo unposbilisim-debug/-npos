@@ -13,9 +13,16 @@ namespace UnAccess.Data.Services;
 
 internal sealed class PersonnelService : ServiceBase, IPersonnelService
 {
-    public PersonnelService(IDbContextFactory<UnAccessDbContext> factory, AuditWriter audit, ILogger<PersonnelService> logger)
+    private readonly IDeviceSyncOutbox _outbox;
+
+    public PersonnelService(
+        IDbContextFactory<UnAccessDbContext> factory,
+        AuditWriter audit,
+        ILogger<PersonnelService> logger,
+        IDeviceSyncOutbox outbox)
         : base(factory, audit, logger)
     {
+        _outbox = outbox;
     }
 
     public Task<IReadOnlyList<PersonnelListItem>> SearchAsync(PersonnelSearchCriteria criteria, CancellationToken cancellationToken)
@@ -234,7 +241,7 @@ internal sealed class PersonnelService : ServiceBase, IPersonnelService
         }, cancellationToken);
     }
 
-    private static async Task<IReadOnlyList<AuditEntry>> CancelActiveCardsAsync(
+    private async Task<IReadOnlyList<AuditEntry>> CancelActiveCardsAsync(
         UnAccessDbContext db,
         int personnelId,
         CancellationToken cancellationToken)
@@ -248,6 +255,7 @@ internal sealed class PersonnelService : ServiceBase, IPersonnelService
         {
             var oldValue = AuditSnapshots.Card(card);
             card.Status = CardStatus.Cancelled;
+            await _outbox.EnqueueCardAsync(db, card, remove: true, cancellationToken);
             audits.Add(new AuditEntry
             {
                 Action = AuditActions.StatusChanged,

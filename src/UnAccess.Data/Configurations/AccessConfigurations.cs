@@ -126,3 +126,23 @@ internal sealed class AccessEventConfiguration : IEntityTypeConfiguration<Access
         builder.HasOne(x => x.Card).WithMany().HasForeignKey(x => x.CardId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
     }
 }
+
+internal sealed class DeviceSyncQueueConfiguration : IEntityTypeConfiguration<DeviceSyncQueue>
+{
+    public void Configure(EntityTypeBuilder<DeviceSyncQueue> builder)
+    {
+        builder.ToTable("DeviceSyncQueue");
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.OperationId).IsRequired().HasMaxLength(FieldLengths.EventId);
+        builder.Property(x => x.OperationType).IsRequired().HasMaxLength(FieldLengths.SyncOperation);
+        builder.Property(x => x.EntityType).IsRequired().HasMaxLength(FieldLengths.SyncOperation);
+        builder.Property(x => x.EntityId).IsRequired().HasMaxLength(FieldLengths.AuditEntityId);
+        builder.Property(x => x.Payload).IsRequired().HasMaxLength(FieldLengths.SyncPayload);
+        builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(FieldLengths.ConnectionStatus);
+        builder.Property(x => x.LastError).HasMaxLength(FieldLengths.Reason);
+        builder.HasIndex(x => x.OperationId).IsUnique().HasDatabaseName("UX_DeviceSyncQueue_OperationId");
+        builder.HasIndex(x => new { x.Status, x.NextAttemptAtUtc, x.Priority, x.CreatedAtUtc }).HasDatabaseName("IX_DeviceSyncQueue_Claim");
+        builder.HasIndex(x => x.ControllerId).HasDatabaseName("IX_DeviceSyncQueue_ControllerId");
+        builder.HasOne(x => x.Controller).WithMany().HasForeignKey(x => x.ControllerId).OnDelete(DeleteBehavior.Restrict).IsRequired();
+    }
+}

@@ -381,6 +381,11 @@ namespace UnAccess.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
+                    b.Property<string>("ConnectionStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
                     b.Property<string>("IpAddress")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -389,7 +394,20 @@ namespace UnAccess.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsSimulation")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<DateTime?>("LastSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastSuccessfulSyncAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastSyncAttemptAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Model")
@@ -454,6 +472,87 @@ namespace UnAccess.Data.Migrations
                     b.ToTable("Departments", (string)null);
                 });
 
+            modelBuilder.Entity("UnAccess.Core.Entities.DeviceSyncQueue", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ControllerId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("MaxAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NextAttemptAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("OperationId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ControllerId")
+                        .HasDatabaseName("IX_DeviceSyncQueue_ControllerId");
+
+                    b.HasIndex("OperationId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_DeviceSyncQueue_OperationId");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc", "Priority", "CreatedAtUtc")
+                        .HasDatabaseName("IX_DeviceSyncQueue_Claim");
+
+                    b.ToTable("DeviceSyncQueue", (string)null);
+                });
+
             modelBuilder.Entity("UnAccess.Core.Entities.Door", b =>
                 {
                     b.Property<int>("Id")
@@ -509,6 +608,11 @@ namespace UnAccess.Data.Migrations
 
                     b.HasIndex("ZoneId")
                         .HasDatabaseName("IX_Doors_ZoneId");
+
+                    b.HasIndex("ControllerId", "ChannelNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Doors_Controller_Channel_Active")
+                        .HasFilter("[IsActive] = 1 AND [ControllerId] IS NOT NULL");
 
                     b.ToTable("Doors", (string)null);
                 });
@@ -961,6 +1065,17 @@ namespace UnAccess.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Personnel");
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.DeviceSyncQueue", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.Controller", "Controller")
+                        .WithMany()
+                        .HasForeignKey("ControllerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Controller");
                 });
 
             modelBuilder.Entity("UnAccess.Core.Entities.Door", b =>

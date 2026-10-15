@@ -30,6 +30,7 @@ public sealed class UnAccessDbContext : DbContext
     public DbSet<AccessGroupDoor> AccessGroupDoors => Set<AccessGroupDoor>();
     public DbSet<PersonnelAccessOverride> PersonnelAccessOverrides => Set<PersonnelAccessOverride>();
     public DbSet<AccessEvent> AccessEvents => Set<AccessEvent>();
+    public DbSet<DeviceSyncQueue> DeviceSyncQueue => Set<DeviceSyncQueue>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

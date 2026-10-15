@@ -32,6 +32,25 @@ public class SimulatorTests
             ValidFrom = new DateOnly(2026, 1, 1)
         }, CancellationToken.None);
         await controller.RemoveCardAsync("80001022", CancellationToken.None);
+        await controller.RemoveCardAsync("80001022", CancellationToken.None);
+
+        var access = new ControllerCardAccess
+        {
+            CardNumber = "80001022",
+            Channels = [new ControllerChannelAccess { ChannelNumber = 1, TimeScheduleId = 7, TimeScheduleCode = "7_24" }]
+        };
+        await controller.ReplaceCardAccessAsync([access], CancellationToken.None);
+        await controller.ReplaceCardAccessAsync([access], CancellationToken.None);
+        var snapshot = controller.GetSnapshot();
+        Assert.Equal(["80001022"], snapshot.Cards.Select(card => card.CardNumber).ToArray());
+        Assert.Equal([1], snapshot.Cards[0].Channels.ToArray());
+
+        controller.SetOffline(true);
+        await Assert.ThrowsAsync<AccessControllerException>(() => controller.OpenDoorAsync(1, CancellationToken.None));
+        controller.SetOffline(false);
+        await controller.ConnectAsync(
+            new ControllerConnectionInfo { Host = "127.0.0.1", Port = 15050, ControllerCode = "SIM-ASC-01" },
+            CancellationToken.None);
 
         var sink = new RecordingSink();
         await controller.StartEventListenerAsync(sink, CancellationToken.None);

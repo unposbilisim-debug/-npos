@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\src\UnAccess.Data\UnAccess.Data.csproj" />
     <ProjectReference Include="..\..\src\UnAccess.Devices\UnAccess.Devices.csproj" />
     <ProjectReference Include="..\..\src\UnAccess.Simulator\UnAccess.Simulator.csproj" />
+    <ProjectReference Include="..\..\src\UnAccess.DeviceService\UnAccess.DeviceService.csproj" />
   </ItemGroup>
 
 </Project>

@@ -119,7 +119,13 @@ public static class DevelopmentSeeder
                 IsActive = true,
                 LastSeenAt = null
             };
+            controller.IsSimulation = true;
             db.Controllers.Add(controller);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else if (!controller.IsSimulation)
+        {
+            controller.IsSimulation = true;
             await db.SaveChangesAsync(cancellationToken);
         }
 
@@ -146,12 +152,12 @@ public static class DevelopmentSeeder
         var it = await EnsureZoneAsync(db, dFirst.Id, "BI", "Bilgi İşlem", isCritical: false, cancellationToken);
         var technical = await EnsureZoneAsync(db, eGround.Id, "TEK", "Teknik Alan", isCritical: false, cancellationToken);
 
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-GIRIS", "Ameliyathane Giriş", 1, "Giriş Okuyucu 1", true, "Çıkış Okuyucu 1", true, cancellationToken);
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-1", "Ameliyathane 1", 2, "Giriş Okuyucu 2", false, null, true, cancellationToken);
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-2", "Ameliyathane 2", 3, "Giriş Okuyucu 3", false, null, true, cancellationToken);
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "STERIL", "Steril Alan", 4, "Giriş Okuyucu 4", false, null, true, cancellationToken);
-        await EnsureDoorAsync(db, entrance.Id, controller.Id, "ANA-GIRIS", "Ana Giriş", 5, "Giriş Okuyucu 5", true, "Çıkış Okuyucu 5", false, cancellationToken);
-        await EnsureDoorAsync(db, entrance.Id, controller.Id, "PER-GIRIS", "Personel Girişi", 6, "Giriş Okuyucu 6", true, "Çıkış Okuyucu 6", false, cancellationToken);
+        await EnsureDoorAsync(db, entrance.Id, controller.Id, "ANA-GIRIS", "Ana Giriş", 1, "Giriş Okuyucu 1", true, "Çıkış Okuyucu 1", false, cancellationToken);
+        await EnsureDoorAsync(db, entrance.Id, controller.Id, "PER-GIRIS", "Personel Girişi", 2, "Giriş Okuyucu 2", true, "Çıkış Okuyucu 2", false, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-GIRIS", "Ameliyathane Giriş", 3, "Giriş Okuyucu 3", true, "Çıkış Okuyucu 3", true, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-1", "Ameliyathane 1", 4, "Giriş Okuyucu 4", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-2", "Ameliyathane 2", 5, "Giriş Okuyucu 5", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "STERIL", "Steril Alan", 6, "Giriş Okuyucu 6", false, null, true, cancellationToken);
         await EnsureDoorAsync(db, emergency.Id, controller.Id, "ACIL-PER", "Acil Servis Personel Girişi", 7, "Giriş Okuyucu 7", false, null, false, cancellationToken);
         await EnsureDoorAsync(db, emergency.Id, controller.Id, "ACIL-ILAC", "Acil İlaç Odası", 8, "Giriş Okuyucu 8", false, null, true, cancellationToken);
         await EnsureDoorAsync(db, clinics.Id, controller.Id, "POL-PER", "Poliklinik Personel Girişi", 9, "Giriş Okuyucu 9", false, null, false, cancellationToken);

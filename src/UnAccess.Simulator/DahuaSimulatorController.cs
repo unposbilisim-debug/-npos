@@ -5,7 +5,8 @@ namespace UnAccess.Simulator;
 public sealed class DahuaSimulatorController : IAccessController
 {
     private readonly object _sync = new();
-    private readonly Dictionary<string, ControllerCardRequest> _cards = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, ControllerCardAccess> _cards = new(StringComparer.OrdinalIgnoreCase);
+    private bool _offline;
     private readonly List<ControllerDoorInfo> _doors;
     private bool _connected;
     private IAccessEventSink? _sink;
@@ -48,6 +49,8 @@ public sealed class DahuaSimulatorController : IAccessController
 
         lock (_sync)
         {
+            if (_offline)
+                throw new AccessControllerException("Kontrolör çevrimdışı.");
             _connected = true;
             _lastSeenAtUtc = DateTime.UtcNow;
         }
@@ -88,7 +91,31 @@ public sealed class DahuaSimulatorController : IAccessController
         lock (_sync)
         {
             EnsureConnected();
-            _cards[card.CardNumber.Trim()] = card;
+            var number = card.CardNumber.Trim();
+            _cards[number] = new ControllerCardAccess
+            {
+                CardNumber = number,
+                PersonnelNumber = card.PersonnelNumber,
+                ValidFrom = card.ValidFrom,
+                ValidUntil = card.ValidUntil
+            };
+            _lastSeenAtUtc = DateTime.UtcNow;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task UpsertCardAccessAsync(ControllerCardAccess access, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(access);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (string.IsNullOrWhiteSpace(access.CardNumber))
+            throw new AccessControllerException("Kart numarası boş olamaz.");
+
+        lock (_sync)
+        {
+            EnsureConnected();
+            _cards[access.CardNumber.Trim()] = Copy(access);
             _lastSeenAtUtc = DateTime.UtcNow;
         }
 
@@ -104,12 +131,71 @@ public sealed class DahuaSimulatorController : IAccessController
         lock (_sync)
         {
             EnsureConnected();
-            if (!_cards.Remove(cardNumber.Trim()))
-                throw new AccessControllerException("Kart simülatörde kayıtlı değil.");
+            _cards.Remove(cardNumber.Trim());
             _lastSeenAtUtc = DateTime.UtcNow;
         }
 
         return Task.CompletedTask;
+    }
+
+    public Task ReplaceCardAccessAsync(IReadOnlyList<ControllerCardAccess> cards, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(cards);
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (_sync)
+        {
+            EnsureConnected();
+            _cards.Clear();
+            foreach (var card in cards)
+            {
+                if (string.IsNullOrWhiteSpace(card.CardNumber))
+                    throw new AccessControllerException("Kart numarası boş olamaz.");
+                _cards[card.CardNumber.Trim()] = Copy(card);
+            }
+
+            _lastSeenAtUtc = DateTime.UtcNow;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public void SetOffline(bool offline)
+    {
+        lock (_sync)
+        {
+            _offline = offline;
+            if (offline)
+                _connected = false;
+        }
+    }
+
+    public SimulatorSnapshot GetSnapshot()
+    {
+        lock (_sync)
+        {
+            return new SimulatorSnapshot
+            {
+                IsOnline = !_offline,
+                IsConnected = _connected,
+                Cards = _cards.Values
+                    .OrderBy(card => card.CardNumber, StringComparer.Ordinal)
+                    .Select(card => new SimulatorCardSnapshot
+                    {
+                        CardNumber = card.CardNumber,
+                        Channels = card.Channels.Select(channel => channel.ChannelNumber).OrderBy(channel => channel).ToArray(),
+                        Schedules = card.Channels
+                            .OrderBy(channel => channel.ChannelNumber)
+                            .Select(channel => new SimulatorChannelSnapshot
+                            {
+                                ChannelNumber = channel.ChannelNumber,
+                                TimeScheduleId = channel.TimeScheduleId,
+                                TimeScheduleCode = channel.TimeScheduleCode
+                            })
+                            .ToArray()
+                    })
+                    .ToArray()
+            };
+        }
     }
 
     public Task OpenDoorAsync(int channelNumber, CancellationToken cancellationToken)
@@ -215,7 +301,27 @@ public sealed class DahuaSimulatorController : IAccessController
 
     private void EnsureConnected()
     {
+        if (_offline)
+            throw new AccessControllerException("Kontrolör çevrimdışı.");
         if (!_connected)
             throw new AccessControllerException("Kontrolör bağlantısı yok.");
     }
+
+    private static ControllerCardAccess Copy(ControllerCardAccess access) =>
+        new()
+        {
+            CardNumber = access.CardNumber.Trim(),
+            PersonnelNumber = access.PersonnelNumber,
+            ValidFrom = access.ValidFrom,
+            ValidUntil = access.ValidUntil,
+            Channels = access.Channels
+                .Select(channel => new ControllerChannelAccess
+                {
+                    ChannelNumber = channel.ChannelNumber,
+                    TimeScheduleId = channel.TimeScheduleId,
+                    TimeScheduleCode = channel.TimeScheduleCode,
+                    Windows = channel.Windows.ToArray()
+                })
+                .ToArray()
+        };
 }

@@ -8,6 +8,7 @@ using UnAccess.Core.Abstractions;
 using UnAccess.Core.Audit;
 using UnAccess.Core.Enums;
 using UnAccess.Core.Exceptions;
+using UnAccess.Core.Sync;
 using UnAccess.Core.Models;
 using UnAccess.Data;
 using UnAccess.Data.Infrastructure;
@@ -369,7 +370,8 @@ public class PhaseOneDataTests
         var service = new PersonnelService(
             new FixedContextFactory(options),
             new AuditWriter(),
-            NullLogger<PersonnelService>.Instance);
+            NullLogger<PersonnelService>.Instance,
+            new DeviceSyncOutbox(new SystemUtcClock(), new DeviceSyncOptions()));
 
         await Assert.ThrowsAnyAsync<Exception>(() =>
             service.UpdateAsync(person.Id, Edit(person, isActive: false), CancellationToken.None));

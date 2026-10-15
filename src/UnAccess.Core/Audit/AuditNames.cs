@@ -7,6 +7,8 @@ public static class AuditActions
     public const string Activated = "Activated";
     public const string Deactivated = "Deactivated";
     public const string StatusChanged = "StatusChanged";
+    public const string FullSyncRequested = "FullSyncRequested";
+    public const string RetryRequested = "RetryRequested";
 }
 
 public static class AuditEntities
@@ -23,4 +25,5 @@ public static class AuditEntities
     public const string AccessGroupDoor = "AccessGroupDoor";
     public const string PersonnelAccessOverride = "PersonnelAccessOverride";
     public const string TimeSchedule = "TimeSchedule";
+    public const string DeviceSync = "DeviceSync";
 }

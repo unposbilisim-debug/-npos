@@ -13,15 +13,18 @@ namespace UnAccess.Data.Services;
 internal sealed class PersonnelAuthorizationService : ServiceBase, IPersonnelAuthorizationService
 {
     private readonly IAccessDecisionService _decisions;
+    private readonly IDeviceSyncOutbox _outbox;
 
     public PersonnelAuthorizationService(
         IDbContextFactory<UnAccessDbContext> factory,
         AuditWriter audit,
         ILogger<PersonnelAuthorizationService> logger,
-        IAccessDecisionService decisions)
+        IAccessDecisionService decisions,
+        IDeviceSyncOutbox outbox)
         : base(factory, audit, logger)
     {
         _decisions = decisions;
+        _outbox = outbox;
     }
 
     public async Task<PersonnelAuthorizationView> GetAsync(int personnelId, CancellationToken cancellationToken)
@@ -116,6 +119,7 @@ internal sealed class PersonnelAuthorizationService : ServiceBase, IPersonnelAut
             entity.ValidFrom = model.ValidFrom;
             entity.ValidUntil = model.ValidUntil;
             entity.IsActive = model.IsActive;
+            await _outbox.EnqueuePersonnelPermissionsAsync(db, model.PersonnelId, ct);
             return entity;
         }, saved => new AuditEntry
         {
@@ -138,6 +142,7 @@ internal sealed class PersonnelAuthorizationService : ServiceBase, IPersonnelAut
                 ct) ?? throw new UnAccessException("Personelin bu yetki grubu ataması yok.");
             oldSnapshot = AuditSnapshots.PersonnelAccessGroup(entity);
             entity.IsActive = false;
+            await _outbox.EnqueuePersonnelPermissionsAsync(db, personnelId, ct);
             return entity;
         }, saved => new AuditEntry
         {
@@ -196,6 +201,7 @@ internal sealed class PersonnelAuthorizationService : ServiceBase, IPersonnelAut
             entity.ValidUntil = model.ValidUntil;
             entity.Reason = reason;
             entity.IsActive = model.IsActive;
+            await _outbox.EnqueuePersonnelPermissionsAsync(db, model.PersonnelId, ct);
             return entity;
         }, saved => new AuditEntry
         {

@@ -73,6 +73,7 @@ public sealed class MainForm : Form
 
         var devices = Node("CİHAZLAR", null);
         devices.Nodes.Add(Node("Kontrolörler", "controllers"));
+        devices.Nodes.Add(Node("Senkronizasyon", "sync"));
         _menu.Nodes.Add(devices);
 
         var access = Node("YETKİLER", null);
@@ -137,6 +138,7 @@ public sealed class MainForm : Form
         "zones" => new ZoneListControl(_scopes, _loggerFactory.CreateLogger<ZoneListControl>()),
         "doors" => new DoorListControl(_scopes, _loggerFactory.CreateLogger<DoorListControl>()),
         "controllers" => new ControllerListControl(_scopes, _loggerFactory.CreateLogger<ControllerListControl>()),
+        "sync" => new DeviceSyncControl(_scopes, _loggerFactory.CreateLogger<DeviceSyncControl>()),
         "access-groups" => new AccessGroupListControl(_scopes, _loggerFactory.CreateLogger<AccessGroupListControl>()),
         "schedules" => new TimeScheduleListControl(_scopes, _loggerFactory.CreateLogger<TimeScheduleListControl>()),
         "overrides" => new PersonnelOverrideListControl(_scopes, _loggerFactory.CreateLogger<PersonnelOverrideListControl>()),

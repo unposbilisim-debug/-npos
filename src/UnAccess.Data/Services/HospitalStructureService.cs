@@ -12,12 +12,16 @@ namespace UnAccess.Data.Services;
 
 internal sealed class HospitalStructureService : ServiceBase, IHospitalStructureService
 {
+    private readonly IDeviceSyncOutbox _outbox;
+
     public HospitalStructureService(
         IDbContextFactory<UnAccessDbContext> factory,
         AuditWriter audit,
-        ILogger<HospitalStructureService> logger)
+        ILogger<HospitalStructureService> logger,
+        IDeviceSyncOutbox outbox)
         : base(factory, audit, logger)
     {
+        _outbox = outbox;
     }
 
     public Task<IReadOnlyList<BuildingListItem>> ListBuildingsAsync(CancellationToken cancellationToken)
@@ -419,6 +423,8 @@ internal sealed class HospitalStructureService : ServiceBase, IHospitalStructure
             controllerName = prepared.ControllerName;
             var door = prepared.Door;
             db.Doors.Add(door);
+            if (door.ControllerId is int controllerId)
+                await _outbox.EnqueueFullSyncAsync(db, controllerId, ct);
             return door;
         }, saved => AuditFor("Kapı", AuditEntities.Door, saved.Id, saved.Code, saved.Name, null, AuditSnapshots.Door(saved), saved.IsActive, wasActive: null), cancellationToken);
 
@@ -443,6 +449,9 @@ internal sealed class HospitalStructureService : ServiceBase, IHospitalStructure
             controllerName = prepared.ControllerName;
             oldSnapshot = AuditSnapshots.Door(door);
             wasActive = door.IsActive;
+            var previousController = door.ControllerId;
+            var previousChannel = door.ChannelNumber;
+            var previousActive = door.IsActive;
             door.ZoneId = prepared.Door.ZoneId;
             door.Code = prepared.Door.Code;
             door.Name = prepared.Door.Name;
@@ -453,6 +462,14 @@ internal sealed class HospitalStructureService : ServiceBase, IHospitalStructure
             door.HasExitReader = prepared.Door.HasExitReader;
             door.IsCritical = prepared.Door.IsCritical;
             door.IsActive = prepared.Door.IsActive;
+            if (previousController != door.ControllerId || previousChannel != door.ChannelNumber || previousActive != door.IsActive)
+            {
+                if (previousController is int oldController)
+                    await _outbox.EnqueueFullSyncAsync(db, oldController, ct);
+                if (door.ControllerId is int newController && newController != previousController)
+                    await _outbox.EnqueueFullSyncAsync(db, newController, ct);
+            }
+
             return door;
         }, saved => AuditFor("Kapı", AuditEntities.Door, saved.Id, saved.Code, saved.Name, oldSnapshot, AuditSnapshots.Door(saved), saved.IsActive, wasActive), cancellationToken);
 
@@ -609,6 +626,13 @@ internal sealed class HospitalStructureService : ServiceBase, IHospitalStructure
                 .FirstOrDefaultAsync(cancellationToken);
             if (controllerName == null)
                 throw new UnAccessException("Kontrolör bulunamadı.");
+            if (model.IsActive && await db.Doors.AnyAsync(
+                door => door.IsActive
+                    && door.ControllerId == controllerId
+                    && door.ChannelNumber == model.ChannelNumber
+                    && door.Id != excludeId,
+                cancellationToken))
+                throw new UnAccessException("Bu kanal aynı kontrolörde başka bir aktif kapıya atanmış.");
         }
 
         var hasExitReader = model.HasExitReader;
