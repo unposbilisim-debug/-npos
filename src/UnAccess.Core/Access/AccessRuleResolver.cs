@@ -82,14 +82,13 @@ public static class AccessRuleResolver
         if (!snapshot.FloorIsActive || !snapshot.BuildingIsActive)
             return denied("Bina veya kat pasif.");
 
-        AccessRuleSnapshot? outside = null;
-        MatchedRuleType outsideType = MatchedRuleType.None;
         foreach (var level in Levels(snapshot))
         {
             var candidates = level.Rules.OrderBy(rule => rule.RuleId).ToList();
             if (candidates.Count == 0)
                 continue;
 
+            // This level already has an active rule for the door. A schedule miss stays here.
             var matching = candidates
                 .Where(rule => schedules.IsMatch(rule.ScheduleIsActive, rule.Windows, hospitalLocal))
                 .ToList();
@@ -100,14 +99,16 @@ public static class AccessRuleResolver
             if (allowed != null)
                 return FromRule(snapshot, card, allowed, level.Type, allowed: true);
 
-            outside ??= candidates[0];
-            if (outsideType == MatchedRuleType.None)
-                outsideType = level.Type;
-        }
-
-        if (outside != null)
-        {
-            return Finish(snapshot, card, false, OutsideScheduleReason, outsideType, outside.RuleId, outside.TimeScheduleId, outside.SourceCode);
+            var outside = candidates[0];
+            return Finish(
+                snapshot,
+                card,
+                false,
+                OutsideScheduleReason,
+                level.Type,
+                outside.RuleId,
+                outside.TimeScheduleId,
+                SourceName(level.Type, outside));
         }
 
         return Finish(snapshot, card, false, NoPermissionReason, MatchedRuleType.None, null, null, "");
@@ -132,8 +133,13 @@ public static class AccessRuleResolver
         var reason = allowed
             ? personal ? "Kişisel izin nedeniyle geçiş onaylandı." : $"{rule.SourceCode} yetki grubundan izin verildi."
             : personal ? "Kişisel yasak nedeniyle geçiş reddedildi." : $"{rule.SourceCode} yetki grubundan yasaklandı.";
-        var source = personal ? "KİŞİSEL İSTİSNA" : rule.SourceCode;
-        return Finish(snapshot, card, allowed, reason, type, rule.RuleId, rule.TimeScheduleId, source);
+        return Finish(snapshot, card, allowed, reason, type, rule.RuleId, rule.TimeScheduleId, SourceName(type, rule));
+    }
+
+    private static string SourceName(MatchedRuleType type, AccessRuleSnapshot rule)
+    {
+        var personal = type is MatchedRuleType.PersonnelDoorOverride or MatchedRuleType.PersonnelZoneOverride;
+        return personal ? "KİŞİSEL İSTİSNA" : rule.SourceCode;
     }
 
     private static Func<string, AccessDecision> Base(AccessSnapshot snapshot) =>

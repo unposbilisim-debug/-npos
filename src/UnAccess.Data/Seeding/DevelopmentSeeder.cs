@@ -126,22 +126,43 @@ public static class DevelopmentSeeder
         var a = await EnsureBuildingAsync(db, "A", "A BLOK", cancellationToken);
         var b = await EnsureBuildingAsync(db, "B", "B BLOK", cancellationToken);
         var c = await EnsureBuildingAsync(db, "C", "C BLOK", cancellationToken);
+        var d = await EnsureBuildingAsync(db, "D", "D BLOK", cancellationToken);
+        var e = await EnsureBuildingAsync(db, "E", "E BLOK", cancellationToken);
 
         var aGround = await EnsureFloorAsync(db, a.Id, "Z", "Zemin Kat", 0, cancellationToken);
         var aFirst = await EnsureFloorAsync(db, a.Id, "1", "1. Kat", 1, cancellationToken);
         var bSecond = await EnsureFloorAsync(db, b.Id, "2", "2. Kat", 2, cancellationToken);
         var cFirst = await EnsureFloorAsync(db, c.Id, "1", "1. Kat", 1, cancellationToken);
+        var dGround = await EnsureFloorAsync(db, d.Id, "Z", "Zemin Kat", 0, cancellationToken);
+        var dFirst = await EnsureFloorAsync(db, d.Id, "1", "1. Kat", 1, cancellationToken);
+        var eGround = await EnsureFloorAsync(db, e.Id, "Z", "Zemin Kat", 0, cancellationToken);
 
-        await EnsureZoneAsync(db, aGround.Id, "GIRIS", "Ana Giriş", isCritical: false, cancellationToken);
-        await EnsureZoneAsync(db, aGround.Id, "ACIL", "Acil Servis", isCritical: false, cancellationToken);
-        await EnsureZoneAsync(db, aFirst.Id, "POL", "Poliklinikler", isCritical: false, cancellationToken);
-        await EnsureZoneAsync(db, bSecond.Id, "YB", "Yoğun Bakım", isCritical: false, cancellationToken);
+        var entrance = await EnsureZoneAsync(db, aGround.Id, "GIRIS", "Ana Giriş Bölgesi", isCritical: false, cancellationToken);
+        var emergency = await EnsureZoneAsync(db, aGround.Id, "ACIL", "Acil Servis", isCritical: false, cancellationToken);
+        var clinics = await EnsureZoneAsync(db, aFirst.Id, "POL", "Poliklinikler", isCritical: false, cancellationToken);
+        var intensive = await EnsureZoneAsync(db, bSecond.Id, "YB", "Yoğun Bakım", isCritical: false, cancellationToken);
         var operating = await EnsureZoneAsync(db, cFirst.Id, "AML", "Ameliyathane Bölgesi", isCritical: true, cancellationToken);
+        var pharmacy = await EnsureZoneAsync(db, dGround.Id, "ECZ", "Eczane", isCritical: false, cancellationToken);
+        var it = await EnsureZoneAsync(db, dFirst.Id, "BI", "Bilgi İşlem", isCritical: false, cancellationToken);
+        var technical = await EnsureZoneAsync(db, eGround.Id, "TEK", "Teknik Alan", isCritical: false, cancellationToken);
 
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-GIRIS", "Ameliyathane Giriş", 1, "Giriş Okuyucu 1", hasExit: true, "Çıkış Okuyucu 1", cancellationToken);
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-1", "Ameliyathane 1", 2, "Giriş Okuyucu 2", hasExit: false, null, cancellationToken);
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-2", "Ameliyathane 2", 3, "Giriş Okuyucu 3", hasExit: false, null, cancellationToken);
-        await EnsureDoorAsync(db, operating.Id, controller.Id, "STERIL", "Steril Alan", 4, "Giriş Okuyucu 4", hasExit: false, null, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-GIRIS", "Ameliyathane Giriş", 1, "Giriş Okuyucu 1", true, "Çıkış Okuyucu 1", true, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-1", "Ameliyathane 1", 2, "Giriş Okuyucu 2", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "AML-2", "Ameliyathane 2", 3, "Giriş Okuyucu 3", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, operating.Id, controller.Id, "STERIL", "Steril Alan", 4, "Giriş Okuyucu 4", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, entrance.Id, controller.Id, "ANA-GIRIS", "Ana Giriş", 5, "Giriş Okuyucu 5", true, "Çıkış Okuyucu 5", false, cancellationToken);
+        await EnsureDoorAsync(db, entrance.Id, controller.Id, "PER-GIRIS", "Personel Girişi", 6, "Giriş Okuyucu 6", true, "Çıkış Okuyucu 6", false, cancellationToken);
+        await EnsureDoorAsync(db, emergency.Id, controller.Id, "ACIL-PER", "Acil Servis Personel Girişi", 7, "Giriş Okuyucu 7", false, null, false, cancellationToken);
+        await EnsureDoorAsync(db, emergency.Id, controller.Id, "ACIL-ILAC", "Acil İlaç Odası", 8, "Giriş Okuyucu 8", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, clinics.Id, controller.Id, "POL-PER", "Poliklinik Personel Girişi", 9, "Giriş Okuyucu 9", false, null, false, cancellationToken);
+        await EnsureDoorAsync(db, intensive.Id, controller.Id, "YB-GIRIS", "Yoğun Bakım Giriş", 10, "Giriş Okuyucu 10", false, null, false, cancellationToken);
+        await EnsureDoorAsync(db, intensive.Id, controller.Id, "YB-ILAC", "Yoğun Bakım İlaç Odası", 11, "Giriş Okuyucu 11", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, pharmacy.Id, controller.Id, "ECZ-GIRIS", "Eczane Giriş", 12, "Giriş Okuyucu 12", false, null, false, cancellationToken);
+        await EnsureDoorAsync(db, pharmacy.Id, controller.Id, "ILAC-DEPO", "İlaç Deposu", 13, "Giriş Okuyucu 13", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, it.Id, controller.Id, "BI-GIRIS", "Bilgi İşlem Giriş", 14, "Giriş Okuyucu 14", false, null, false, cancellationToken);
+        await EnsureDoorAsync(db, it.Id, controller.Id, "SERVER", "Server Odası", 15, "Giriş Okuyucu 15", false, null, true, cancellationToken);
+        await EnsureDoorAsync(db, technical.Id, controller.Id, "TEK-SRV", "Teknik Servis", 16, "Giriş Okuyucu 16", false, null, false, cancellationToken);
+        await EnsureDoorAsync(db, technical.Id, controller.Id, "ELEKTRIK", "Elektrik Odası", 17, "Giriş Okuyucu 17", false, null, true, cancellationToken);
     }
 
     private static async Task<Building> EnsureBuildingAsync(
@@ -197,7 +218,15 @@ public static class DevelopmentSeeder
     {
         var existing = await db.Zones.FirstOrDefaultAsync(z => z.FloorId == floorId && z.Code == code, cancellationToken);
         if (existing != null)
+        {
+            if (!string.Equals(existing.Name, name, StringComparison.Ordinal))
+            {
+                existing.Name = name;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+
             return existing;
+        }
 
         var zone = new Zone
         {
@@ -222,6 +251,7 @@ public static class DevelopmentSeeder
         string entryReader,
         bool hasExit,
         string? exitReader,
+        bool isCritical,
         CancellationToken cancellationToken)
     {
         if (await db.Doors.AnyAsync(d => d.Code == code, cancellationToken))
@@ -237,7 +267,7 @@ public static class DevelopmentSeeder
             EntryReaderName = entryReader,
             HasExitReader = hasExit,
             ExitReaderName = exitReader,
-            IsCritical = true,
+            IsCritical = isCritical,
             IsActive = true
         });
         await db.SaveChangesAsync(cancellationToken);
@@ -275,16 +305,35 @@ public static class DevelopmentSeeder
         foreach (var (code, name) in AccessGroups)
             await EnsureAccessGroupAsync(db, code, name, cancellationToken);
 
-        await EnsureZoneGrantAsync(db, "CERRAH", "Ana Giriş", schedule.Id, cancellationToken);
-        await EnsureZoneGrantAsync(db, "CERRAH", "Ameliyathane Bölgesi", schedule.Id, cancellationToken);
-        await EnsureZoneGrantAsync(db, "CERRAH", "Yoğun Bakım", schedule.Id, cancellationToken);
-        await EnsureZoneGrantAsync(db, "ECZACI", "Ana Giriş", schedule.Id, cancellationToken);
-        var pharmacy = await db.Zones.AsNoTracking().FirstOrDefaultAsync(
-            zone => zone.Name == "Eczane" || zone.Name == "Eczane Bölgesi",
-            cancellationToken);
-        if (pharmacy != null)
-            await EnsureZoneGrantAsync(db, "ECZACI", pharmacy.Name, schedule.Id, cancellationToken);
-        await EnsureZoneGrantAsync(db, "TEKNIK", "Ana Giriş", schedule.Id, cancellationToken);
+        await GrantZonesAsync(db, "CERRAH", schedule.Id, cancellationToken, "Ana Giriş Bölgesi", "Ameliyathane Bölgesi", "Yoğun Bakım");
+        await GrantZonesAsync(db, "HEMSIRE", schedule.Id, cancellationToken, "Ana Giriş Bölgesi", "Yoğun Bakım");
+        await GrantZonesAsync(db, "ECZACI", schedule.Id, cancellationToken, "Ana Giriş Bölgesi", "Eczane");
+        await GrantZonesAsync(db, "TEKNIK", schedule.Id, cancellationToken, "Ana Giriş Bölgesi", "Teknik Alan", "Bilgi İşlem");
+        await GrantZonesAsync(
+            db,
+            "GUVENLIK",
+            schedule.Id,
+            cancellationToken,
+            "Ana Giriş Bölgesi",
+            "Acil Servis",
+            "Poliklinikler",
+            "Yoğun Bakım",
+            "Ameliyathane Bölgesi",
+            "Eczane",
+            "Bilgi İşlem",
+            "Teknik Alan");
+        await GrantZonesAsync(db, "TEMIZLIK", schedule.Id, cancellationToken, "Ana Giriş Bölgesi");
+    }
+
+    private static async Task GrantZonesAsync(
+        UnAccessDbContext db,
+        string groupCode,
+        int scheduleId,
+        CancellationToken cancellationToken,
+        params string[] zoneNames)
+    {
+        foreach (var zoneName in zoneNames)
+            await EnsureZoneGrantAsync(db, groupCode, zoneName, scheduleId, cancellationToken);
     }
 
     private static async Task EnsureAccessGroupAsync(

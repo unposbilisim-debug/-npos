@@ -235,10 +235,34 @@ public class PhaseOneDataTests
         });
 
         var zones = await hospital.ListZonesAsync(null, null, CancellationToken.None);
-        Assert.Contains(zones, zone => zone.Location == "A BLOK / Zemin Kat" && zone.Name == "Ana Giriş");
+        Assert.Contains(zones, zone => zone.Location == "A BLOK / Zemin Kat" && zone.Name == "Ana Giriş Bölgesi");
         Assert.Contains(zones, zone => zone.Location == "A BLOK / Zemin Kat" && zone.Name == "Acil Servis");
         Assert.Contains(zones, zone => zone.Location == "A BLOK / 1. Kat" && zone.Name == "Poliklinikler");
         Assert.Contains(zones, zone => zone.Location == "B BLOK / 2. Kat" && zone.Name == "Yoğun Bakım");
+        Assert.Contains(zones, zone => zone.Location == "D BLOK / Zemin Kat" && zone.Name == "Eczane");
+        Assert.Contains(zones, zone => zone.Location == "D BLOK / 1. Kat" && zone.Name == "Bilgi İşlem");
+        Assert.Contains(zones, zone => zone.Location == "E BLOK / Zemin Kat" && zone.Name == "Teknik Alan");
+        Assert.Equal(
+            new[] { "Ana Giriş", "Personel Girişi" }.ToHashSet(),
+            NamesAt(doors, "A BLOK / Zemin Kat / Ana Giriş Bölgesi"));
+        Assert.Equal(
+            new[] { "Acil Servis Personel Girişi", "Acil İlaç Odası" }.ToHashSet(),
+            NamesAt(doors, "A BLOK / Zemin Kat / Acil Servis"));
+        Assert.Equal(
+            new[] { "Poliklinik Personel Girişi" }.ToHashSet(),
+            NamesAt(doors, "A BLOK / 1. Kat / Poliklinikler"));
+        Assert.Equal(
+            new[] { "Yoğun Bakım Giriş", "Yoğun Bakım İlaç Odası" }.ToHashSet(),
+            NamesAt(doors, "B BLOK / 2. Kat / Yoğun Bakım"));
+        Assert.Equal(
+            new[] { "Eczane Giriş", "İlaç Deposu" }.ToHashSet(),
+            NamesAt(doors, "D BLOK / Zemin Kat / Eczane"));
+        Assert.Equal(
+            new[] { "Bilgi İşlem Giriş", "Server Odası" }.ToHashSet(),
+            NamesAt(doors, "D BLOK / 1. Kat / Bilgi İşlem"));
+        Assert.Equal(
+            new[] { "Teknik Servis", "Elektrik Odası" }.ToHashSet(),
+            NamesAt(doors, "E BLOK / Zemin Kat / Teknik Alan"));
 
         var controller = Assert.Single(await controllers.ListAsync(CancellationToken.None), item => item.Name == "Test Kontrolörü");
         Assert.Equal("Simulator", controller.Model);
@@ -397,6 +421,9 @@ public class PhaseOneDataTests
         CardNumber = suffix + Guid.NewGuid().ToString("N")[..10],
         ValidFrom = new DateOnly(2026, 1, 1)
     };
+
+    private static HashSet<string> NamesAt(IEnumerable<DoorListItem> doors, string location) =>
+        doors.Where(door => door.Location == location).Select(door => door.Name).ToHashSet();
 
     private T Service<T>() where T : notnull
     {

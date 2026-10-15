@@ -177,6 +177,105 @@ public class AccessDecisionSqlTests
     }
 
     [SkippableFact]
+    public async Task Personal_server_room_schedule_does_not_fall_back_to_cerrah_group()
+    {
+        Skip.IfNot(_database.Available, _database.SkipReason);
+        await using var db = await Factory().CreateDbContextAsync();
+        var surgeon = await db.AccessGroups.AsNoTracking().SingleAsync(item => item.Code == "CERRAH");
+        var door = await db.Doors.AsNoTracking().SingleAsync(item => item.Code == "SERVER");
+        var full = await db.TimeSchedules.AsNoTracking().SingleAsync(item => item.Code == "7_24");
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var office = await Service<ITimeScheduleService>().SaveAsync(
+            Schedule("MS" + suffix, "Mesai " + suffix, OfficeDays()),
+            CancellationToken.None);
+        var personnel = Service<IPersonnelService>();
+        var departments = await personnel.GetDepartmentsAsync(CancellationToken.None);
+        var jobs = await personnel.GetJobTitlesAsync(CancellationToken.None);
+        var person = await personnel.CreateAsync(new PersonnelEditModel
+        {
+            PersonnelNumber = "AHT" + suffix,
+            FirstName = "Ahmet",
+            LastName = "Yılmaz",
+            DepartmentId = departments.Single(item => item.Code == "GC").Id,
+            JobTitleId = jobs.Single(item => item.Code == "DOKTOR").Id,
+            IsActive = true
+        }, CancellationToken.None);
+        await Service<ICardService>().CreateAsync(new CardEditModel
+        {
+            PersonnelId = person.Id,
+            CardNumber = "AH" + suffix,
+            ValidFrom = new DateOnly(2026, 1, 1)
+        }, CancellationToken.None);
+        await Service<IPersonnelAuthorizationService>().AssignGroupAsync(new PersonnelGroupEditModel
+        {
+            PersonnelId = person.Id,
+            AccessGroupId = surgeon.Id,
+            ValidFrom = new DateOnly(2026, 1, 1),
+            IsActive = true
+        }, CancellationToken.None);
+        await Service<IAccessGroupService>().SetDoorRuleAsync(surgeon.Id, door.Id, full.Id, true, CancellationToken.None);
+        await Service<IPersonnelAuthorizationService>().SaveOverrideAsync(new PersonnelOverrideEditModel
+        {
+            PersonnelId = person.Id,
+            DoorId = door.Id,
+            TimeScheduleId = office.Id,
+            IsAllowed = true,
+            ValidFrom = new DateOnly(2026, 1, 1),
+            IsActive = true,
+            Reason = "Mesai içi kişisel izin"
+        }, CancellationToken.None);
+
+        var service = Service<IAccessDecisionService>();
+        var morning = await service.EvaluateAsync(person.Id, door.Id, new DateTime(2026, 10, 15, 10, 0, 0), CancellationToken.None);
+        var night = await service.EvaluateAsync(person.Id, door.Id, new DateTime(2026, 10, 15, 22, 0, 0), CancellationToken.None);
+
+        Assert.True(morning.IsAllowed);
+        Assert.Equal(MatchedRuleType.PersonnelDoorOverride, morning.MatchedRuleType);
+        Assert.Equal(office.Id, morning.TimeScheduleId);
+        Assert.False(night.IsAllowed);
+        Assert.Equal(AccessRuleResolver.OutsideScheduleReason, night.Reason);
+        Assert.Equal(MatchedRuleType.PersonnelDoorOverride, night.MatchedRuleType);
+        Assert.Equal(office.Id, night.TimeScheduleId);
+        Assert.NotEqual(full.Id, night.TimeScheduleId);
+    }
+
+    [SkippableFact]
+    public async Task Personal_zone_outside_schedule_does_not_use_group_door_allow()
+    {
+        Skip.IfNot(_database.Available, _database.SkipReason);
+        var world = await NewWorldAsync();
+        await GrantDoorAsync(world, world.AllowGroup, allowed: true, world.FullTime);
+        await OverrideZoneAsync(world, allowed: true, world.OfficeTime);
+        var morning = await EvaluateAsync(world, world.At(10, 0));
+        var night = await EvaluateAsync(world, world.At(22, 0));
+
+        Assert.True(morning.IsAllowed);
+        Assert.Equal(MatchedRuleType.PersonnelZoneOverride, morning.MatchedRuleType);
+        Assert.False(night.IsAllowed);
+        Assert.Equal(AccessRuleResolver.OutsideScheduleReason, night.Reason);
+        Assert.Equal(MatchedRuleType.PersonnelZoneOverride, night.MatchedRuleType);
+        Assert.Equal(world.OfficeTime, night.TimeScheduleId);
+    }
+
+    [SkippableFact]
+    public async Task Group_door_outside_schedule_does_not_use_group_zone_allow()
+    {
+        Skip.IfNot(_database.Available, _database.SkipReason);
+        var world = await NewWorldAsync();
+        await GrantZoneAsync(world, world.AllowGroup, allowed: true, world.FullTime);
+        await GrantDoorAsync(world, world.AllowGroup, allowed: true, world.OfficeTime);
+        var morning = await EvaluateAsync(world, world.At(10, 0));
+        var night = await EvaluateAsync(world, world.At(22, 0));
+
+        Assert.True(morning.IsAllowed);
+        Assert.Equal(MatchedRuleType.AccessGroupDoor, morning.MatchedRuleType);
+        Assert.False(night.IsAllowed);
+        Assert.Equal(AccessRuleResolver.OutsideScheduleReason, night.Reason);
+        Assert.Equal(MatchedRuleType.AccessGroupDoor, night.MatchedRuleType);
+        Assert.Equal(world.OfficeTime, night.TimeScheduleId);
+    }
+
+    [SkippableFact]
     public async Task Simulator_records_granted_and_denied_events_and_rejects_a_duplicate_event_id()
     {
         Skip.IfNot(_database.Available, _database.SkipReason);
@@ -229,6 +328,17 @@ public class AccessDecisionSqlTests
             IsAllowed = allowed,
             ValidFrom = new DateOnly(2026, 1, 1),
             ValidUntil = validUntil,
+            IsActive = true
+        }, CancellationToken.None);
+
+    private async Task OverrideZoneAsync(World world, bool allowed, int scheduleId) =>
+        await Service<IPersonnelAuthorizationService>().SaveOverrideAsync(new PersonnelOverrideEditModel
+        {
+            PersonnelId = world.PersonnelId,
+            ZoneId = world.ZoneId,
+            TimeScheduleId = scheduleId,
+            IsAllowed = allowed,
+            ValidFrom = new DateOnly(2026, 1, 1),
             IsActive = true
         }, CancellationToken.None);
 
