@@ -54,17 +54,9 @@ internal sealed class HospitalClock : IHospitalClock
             id = "Europe/Istanbul";
 
         var trimmed = id.Trim();
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById(trimmed);
-        }
-        catch (TimeZoneNotFoundException exception)
-        {
-            throw new UnAccessException($"Hastane saat dilimi bulunamadı: {trimmed}", exception);
-        }
-        catch (InvalidTimeZoneException exception)
-        {
-            throw new UnAccessException($"Hastane saat dilimi geçersiz: {trimmed}", exception);
-        }
+        if (TimeZoneLookup.TryFind(trimmed, out var zone))
+            return zone;
+
+        throw new UnAccessException($"Hastane saat dilimi bulunamadı: {trimmed}");
     }
 }

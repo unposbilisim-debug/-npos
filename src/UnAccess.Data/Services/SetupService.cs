@@ -54,14 +54,8 @@ internal sealed class SetupService : ISetupService
         ArgumentNullException.ThrowIfNull(settings);
         var hospital = TextRules.Name(settings.HospitalName, "Hastane adı");
         var zone = (settings.TimeZoneId ?? "").Trim();
-        try
-        {
-            _ = TimeZoneInfo.FindSystemTimeZoneById(zone);
-        }
-        catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
-        {
+        if (!TimeZoneLookup.TryFind(zone, out _))
             throw new UnAccessException("Saat dilimi bulunamadı.");
-        }
 
         var directory = (settings.BackupDirectory ?? "").Trim();
         if (settings.BackupEnabled)

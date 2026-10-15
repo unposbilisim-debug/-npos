@@ -186,14 +186,8 @@ internal sealed class RuntimeSettingsService : IRuntimeSettings, ISystemSettingS
             case SettingKeys.HospitalName:
                 return TextRules.Name(text, "Hastane adı");
             case SettingKeys.TimeZone:
-                try
-                {
-                    _ = TimeZoneInfo.FindSystemTimeZoneById(text);
-                }
-                catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
-                {
+                if (!TimeZoneLookup.TryFind(text, out _))
                     throw new UnAccessException("Saat dilimi bulunamadı.");
-                }
 
                 return text;
             case SettingKeys.LoginMaxFailedAttempts:

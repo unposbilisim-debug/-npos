@@ -188,6 +188,29 @@ public class OperationsUnitTests
     }
 
     [Fact]
+    public void Hospital_clock_accepts_iana_and_windows_timezone_ids()
+    {
+        var iana = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Hospital:TimeZoneId"] = "Europe/Istanbul"
+        }).Build();
+        var windows = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Hospital:TimeZoneId"] = "Turkey Standard Time"
+        }).Build();
+
+        var fromIana = new HospitalClock(iana);
+        var fromWindows = new HospitalClock(windows);
+
+        Assert.Equal(TimeSpan.FromHours(3), fromIana.Zone.BaseUtcOffset);
+        Assert.Equal(TimeSpan.FromHours(3), fromWindows.Zone.BaseUtcOffset);
+        Assert.Throws<UnAccessException>(() => new HospitalClock(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Hospital:TimeZoneId"] = "Not/AZone"
+        }).Build()));
+    }
+
+    [Fact]
     public void Production_source_does_not_enable_sensitive_logging_or_hardcode_a_version_label()
     {
         var root = Repo.Root();

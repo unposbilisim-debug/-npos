@@ -83,18 +83,8 @@ internal sealed class InstallationReadinessService : IInstallationReadinessServi
 
         var zoneOk = false;
         var zone = health.TablesReadable ? await _settings.TimeZoneIdAsync(cancellationToken) : "";
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(zone))
-            {
-                _ = TimeZoneInfo.FindSystemTimeZoneById(zone);
-                zoneOk = true;
-            }
-        }
-        catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
-        {
-            zoneOk = false;
-        }
+        if (!string.IsNullOrWhiteSpace(zone) && TimeZoneLookup.TryFind(zone, out _))
+            zoneOk = true;
 
         items.Add(new ReadinessItem
         {
