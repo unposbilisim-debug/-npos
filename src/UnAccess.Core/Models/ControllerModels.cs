@@ -10,4 +10,8 @@ public sealed class ControllerListItem
     public string? SerialNumber { get; init; }
     public bool IsActive { get; init; }
     public DateTime? LastSeenAtUtc { get; init; }
+    public string ConnectionText { get; init; } = "";
+    public DateTime? LastSuccessfulSyncAtUtc { get; init; }
+    public int PendingJobs { get; set; }
+    public string? LastError { get; init; }
 }

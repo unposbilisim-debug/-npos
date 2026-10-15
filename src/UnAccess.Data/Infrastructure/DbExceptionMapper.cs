@@ -73,6 +73,10 @@ internal static class DbExceptionMapper
             return "Bu kapı kuralı grupta zaten kayıtlı.";
         if (sqlMessage.Contains("UX_AccessEvents_EventId", StringComparison.OrdinalIgnoreCase))
             return "Bu geçiş olay numarası zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_Users_Username", StringComparison.OrdinalIgnoreCase))
+            return "Bu kullanıcı adı zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_Roles_Code", StringComparison.OrdinalIgnoreCase))
+            return "Bu rol kodu zaten kayıtlı.";
         if (sqlMessage.Contains("CK_PersonnelAccessOverrides_Target", StringComparison.OrdinalIgnoreCase))
             return "İstisna için bölge veya kapıdan yalnızca biri seçilmelidir.";
 

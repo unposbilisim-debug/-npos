@@ -26,4 +26,6 @@ public static class AuditEntities
     public const string PersonnelAccessOverride = "PersonnelAccessOverride";
     public const string TimeSchedule = "TimeSchedule";
     public const string DeviceSync = "DeviceSync";
+    public const string User = "User";
+    public const string SystemSetting = "SystemSetting";
 }

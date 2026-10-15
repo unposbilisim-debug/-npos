@@ -6,28 +6,30 @@ namespace UnAccess.Data.Infrastructure;
 
 internal sealed class HospitalClock : IHospitalClock
 {
+    private readonly object _sync = new();
+    private TimeZoneInfo _zone;
+
     public HospitalClock(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
-        var id = configuration["Hospital:TimeZoneId"];
-        if (string.IsNullOrWhiteSpace(id))
-            id = "Europe/Istanbul";
+        _zone = Resolve(configuration["Hospital:TimeZoneId"]);
+    }
 
-        try
+    public TimeZoneInfo Zone
+    {
+        get
         {
-            Zone = TimeZoneInfo.FindSystemTimeZoneById(id.Trim());
-        }
-        catch (TimeZoneNotFoundException exception)
-        {
-            throw new UnAccessException($"Hastane saat dilimi bulunamadı: {id.Trim()}", exception);
-        }
-        catch (InvalidTimeZoneException exception)
-        {
-            throw new UnAccessException($"Hastane saat dilimi geçersiz: {id.Trim()}", exception);
+            lock (_sync)
+                return _zone;
         }
     }
 
-    public TimeZoneInfo Zone { get; }
+    public void ApplyTimeZone(string timeZoneId)
+    {
+        var zone = Resolve(timeZoneId);
+        lock (_sync)
+            _zone = zone;
+    }
 
     public DateTime ToHospitalLocal(DateTime evaluationTime)
     {
@@ -44,5 +46,25 @@ internal sealed class HospitalClock : IHospitalClock
     {
         var unspecified = DateTime.SpecifyKind(hospitalLocal, DateTimeKind.Unspecified);
         return TimeZoneInfo.ConvertTimeToUtc(unspecified, Zone);
+    }
+
+    private static TimeZoneInfo Resolve(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            id = "Europe/Istanbul";
+
+        var trimmed = id.Trim();
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(trimmed);
+        }
+        catch (TimeZoneNotFoundException exception)
+        {
+            throw new UnAccessException($"Hastane saat dilimi bulunamadı: {trimmed}", exception);
+        }
+        catch (InvalidTimeZoneException exception)
+        {
+            throw new UnAccessException($"Hastane saat dilimi geçersiz: {trimmed}", exception);
+        }
     }
 }

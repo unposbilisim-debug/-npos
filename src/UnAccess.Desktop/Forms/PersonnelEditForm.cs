@@ -5,6 +5,7 @@ using UnAccess.Core.Common;
 using UnAccess.Core.Enums;
 using UnAccess.Core.Exceptions;
 using UnAccess.Core.Models;
+using UnAccess.Core.Security;
 using UnAccess.Desktop.Ui;
 
 namespace UnAccess.Desktop.Forms;
@@ -110,6 +111,9 @@ internal sealed class PersonnelEditForm : Form
         }
 
         var accessPage = new TabPage("Yetkiler") { Padding = new Padding(4) };
+        var canAccess = false;
+        using (var scope = scopes.CreateScope())
+            canAccess = scope.ServiceProvider.GetRequiredService<IAccessGuard>().Can(Permissions.AccessView);
         if (existing == null)
         {
             accessPage.Controls.Add(new Label
@@ -117,6 +121,15 @@ internal sealed class PersonnelEditForm : Form
                 Dock = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleCenter,
                 Text = "Personel kaydedildikten sonra yetkiler bu sekmede görünür."
+            });
+        }
+        else if (!canAccess)
+        {
+            accessPage.Controls.Add(new Label
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Text = "Yetkileri görüntüleme izniniz yok."
             });
         }
         else

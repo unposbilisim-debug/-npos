@@ -7,6 +7,7 @@ public interface IHospitalClock
     TimeZoneInfo Zone { get; }
     DateTime ToHospitalLocal(DateTime evaluationTime);
     DateTime ToUtc(DateTime hospitalLocal);
+    void ApplyTimeZone(string timeZoneId);
 }
 
 public interface IAccessDecisionService

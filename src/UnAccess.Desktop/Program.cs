@@ -2,8 +2,8 @@ using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using UnAccess.Data;
 using UnAccess.Core.Abstractions;
+using UnAccess.Data;
 using UnAccess.Desktop.Forms;
 using UnAccess.Desktop.Logging;
 using UnAccess.Desktop.Passage;
@@ -83,26 +83,55 @@ internal static class Program
         };
 
         if (!dataConfigured)
-            logger.LogWarning(Core.Exceptions.DataMessages.MissingConnectionString);
-        else
         {
-            try
+            logger.LogWarning(Core.Exceptions.DataMessages.MissingConnectionString);
+            MessageBox.Show(
+                "Veritabanı bağlantısı tanımlı değil. Uygulama açılamadı.",
+                "UnAccess",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
+        }
+
+        try
+        {
+            using var scope = provider.CreateScope();
+            scope.ServiceProvider.GetRequiredService<DatabaseInitializer>()
+                .InitializeAsync(CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+            var accounts = scope.ServiceProvider.GetRequiredService<IAccountService>();
+            var current = provider.GetRequiredService<ICurrentUser>();
+            if (!accounts.HasAnyUserAsync(CancellationToken.None).GetAwaiter().GetResult())
             {
-                using var scope = provider.CreateScope();
-                scope.ServiceProvider.GetRequiredService<DatabaseInitializer>()
-                    .InitializeAsync(CancellationToken.None)
-                    .GetAwaiter()
-                    .GetResult();
+                using var first = new FirstAdminForm(accounts);
+                if (first.ShowDialog() != DialogResult.OK)
+                    return;
             }
-            catch (Exception exception)
+
+            if (!current.IsAuthenticated)
             {
-                logger.LogError(exception, "Veritabanı başlatılamadı.");
-                MessageBox.Show(
-                    "Veritabanına bağlanılamadı veya şema güncellenemedi. Ayrıntı günlük dosyasına yazıldı.",
-                    "UnAccess",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                using var login = new LoginForm(accounts);
+                if (login.ShowDialog() != DialogResult.OK)
+                    return;
             }
+
+            if (current.MustChangePassword)
+            {
+                using var change = new ChangePasswordForm(accounts, required: true);
+                if (change.ShowDialog() != DialogResult.OK)
+                    return;
+            }
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Veritabanı başlatılamadı.");
+            MessageBox.Show(
+                "Veritabanına bağlanılamadı veya şema güncellenemedi. Ayrıntı günlük dosyasına yazıldı.",
+                "UnAccess",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning);
+            return;
         }
 
         Application.Run(provider.GetRequiredService<MainForm>());

@@ -31,6 +31,12 @@ public sealed class UnAccessDbContext : DbContext
     public DbSet<PersonnelAccessOverride> PersonnelAccessOverrides => Set<PersonnelAccessOverride>();
     public DbSet<AccessEvent> AccessEvents => Set<AccessEvent>();
     public DbSet<DeviceSyncQueue> DeviceSyncQueue => Set<DeviceSyncQueue>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<SecurityEvent> SecurityEvents => Set<SecurityEvent>();
+    public DbSet<ServiceHeartbeat> ServiceHeartbeats => Set<ServiceHeartbeat>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,8 +60,11 @@ public sealed class UnAccessDbContext : DbContext
         var utcNow = DateTime.UtcNow;
         foreach (var entry in ChangeTracker.Entries())
         {
-            if (entry.State == EntityState.Deleted)
+            if (entry.State == EntityState.Deleted && entry.Entity is not UserRole)
                 throw new UnAccessException("Kayıtlar fiziksel olarak silinemez. Kaydı pasife alın veya durumunu değiştirin.");
+
+            if (entry.State == EntityState.Modified && entry.Entity is AuditLog or SecurityEvent)
+                throw new UnAccessException("Denetim ve güvenlik kayıtları değiştirilemez.");
 
             if (entry.Entity is not IHasTimestamps timestamps)
                 continue;

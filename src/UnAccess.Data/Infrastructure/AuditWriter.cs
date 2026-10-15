@@ -1,3 +1,4 @@
+using UnAccess.Core.Abstractions;
 using UnAccess.Core.Common;
 using UnAccess.Core.Entities;
 using UnAccess.Core.Models;
@@ -6,6 +7,17 @@ namespace UnAccess.Data.Infrastructure;
 
 public sealed class AuditWriter
 {
+    private readonly ICurrentUser? _current;
+
+    public AuditWriter()
+    {
+    }
+
+    public AuditWriter(ICurrentUser current)
+    {
+        _current = current;
+    }
+
     public void Add(UnAccessDbContext db, AuditEntry entry)
     {
         ArgumentNullException.ThrowIfNull(db);
@@ -13,7 +25,7 @@ public sealed class AuditWriter
 
         db.AuditLogs.Add(new AuditLog
         {
-            UserId = entry.UserId,
+            UserId = entry.UserId ?? (_current is { IsAuthenticated: true } ? _current.UserId : null),
             Action = Required(entry.Action, FieldLengths.AuditAction),
             EntityType = Required(entry.EntityType, FieldLengths.AuditEntityType),
             EntityId = string.IsNullOrWhiteSpace(entry.EntityId) ? null : Required(entry.EntityId, FieldLengths.AuditEntityId),

@@ -120,6 +120,7 @@ internal sealed class AccessEventConfiguration : IEntityTypeConfiguration<Access
         builder.HasIndex(x => new { x.DoorId, x.OccurredAtUtc }).HasDatabaseName("IX_AccessEvents_Door_OccurredAtUtc");
         builder.HasIndex(x => new { x.PersonnelId, x.OccurredAtUtc }).HasDatabaseName("IX_AccessEvents_Personnel_OccurredAtUtc");
         builder.HasIndex(x => new { x.CardNumber, x.OccurredAtUtc }).HasDatabaseName("IX_AccessEvents_Card_OccurredAtUtc");
+        builder.HasIndex(x => new { x.Decision, x.OccurredAtUtc }).HasDatabaseName("IX_AccessEvents_Decision_OccurredAtUtc");
         builder.HasOne(x => x.Controller).WithMany().HasForeignKey(x => x.ControllerId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
         builder.HasOne(x => x.Door).WithMany().HasForeignKey(x => x.DoorId).OnDelete(DeleteBehavior.Restrict).IsRequired();
         builder.HasOne(x => x.Personnel).WithMany().HasForeignKey(x => x.PersonnelId).OnDelete(DeleteBehavior.Restrict).IsRequired(false);

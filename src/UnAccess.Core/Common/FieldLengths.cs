@@ -32,4 +32,12 @@ public static class FieldLengths
     public const int SyncOperation = 64;
     public const int SyncPayload = 4000;
     public const int ConnectionStatus = 32;
+    public const int Username = 64;
+    public const int PasswordHash = 500;
+    public const int SettingKey = 64;
+    public const int SettingValue = 500;
+    public const int SecurityDetail = 1000;
+    public const int ServiceName = 64;
+    public const int InstanceId = 64;
+    public const int Version = 32;
 }

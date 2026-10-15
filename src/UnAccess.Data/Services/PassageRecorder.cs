@@ -12,13 +12,13 @@ namespace UnAccess.Data.Services;
 internal sealed class PassageRecorder : IPassageRecorder
 {
     private readonly IDbContextFactory<UnAccessDbContext> _factory;
-    private readonly IAccessDecisionService _decisions;
+    private readonly AccessDecisionService _decisions;
     private readonly IHospitalClock _clock;
     private readonly ILogger<PassageRecorder> _logger;
 
     public PassageRecorder(
         IDbContextFactory<UnAccessDbContext> factory,
-        IAccessDecisionService decisions,
+        AccessDecisionService decisions,
         IHospitalClock clock,
         ILogger<PassageRecorder> logger)
     {

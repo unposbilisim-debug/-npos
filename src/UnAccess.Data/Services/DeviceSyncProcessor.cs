@@ -13,20 +13,23 @@ internal sealed class DeviceSyncProcessor : IDeviceSyncProcessor
     private readonly IDbContextFactory<UnAccessDbContext> _factory;
     private readonly IDevicePermissionProjectionService _projection;
     private readonly DeviceSyncOptions _options;
+    private readonly IRuntimeSettings _runtime;
 
     public DeviceSyncProcessor(
         IDbContextFactory<UnAccessDbContext> factory,
         IDevicePermissionProjectionService projection,
-        DeviceSyncOptions options)
+        DeviceSyncOptions options,
+        IRuntimeSettings runtime)
     {
         _factory = factory;
         _projection = projection;
         _options = options;
+        _runtime = runtime;
     }
 
     public async Task RecoverStaleAsync(DateTime utcNow, CancellationToken cancellationToken)
     {
-        var cutoff = utcNow - _options.StaleProcessing;
+        var cutoff = utcNow - await _runtime.DeviceSyncStaleProcessingAsync(cancellationToken);
         await using var db = await _factory.CreateDbContextAsync(cancellationToken);
         var ids = await db.DeviceSyncQueue
             .Where(item => item.Status == DeviceSyncStatus.Processing && item.StartedAtUtc != null && item.StartedAtUtc < cutoff)

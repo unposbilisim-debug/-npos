@@ -14,13 +14,14 @@ internal sealed class ControllerListControl : ScreenControl
     public ControllerListControl(IServiceScopeFactory scopes, ILogger<ControllerListControl> logger)
         : base(scopes, logger)
     {
-        _grid.Columns.Add(Grids.Text(nameof(Row.Name), "Ad", 160));
-        _grid.Columns.Add(Grids.Text(nameof(Row.Model), "Model", 100));
+        _grid.Columns.Add(Grids.Text(nameof(Row.Name), "Kontrolör", 140));
         _grid.Columns.Add(Grids.Text(nameof(Row.IpAddress), "IP", 110));
-        _grid.Columns.Add(Grids.Text(nameof(Row.Port), "Port", 60));
-        _grid.Columns.Add(Grids.Text(nameof(Row.SerialNumber), "Seri No", 110));
-        _grid.Columns.Add(Grids.Text(nameof(Row.Status), "Durum", 70));
+        _grid.Columns.Add(Grids.Text(nameof(Row.Model), "Model", 90));
+        _grid.Columns.Add(Grids.Text(nameof(Row.Connection), "Durum", 90));
         _grid.Columns.Add(Grids.Text(nameof(Row.LastSeen), "Son Görülme", 120));
+        _grid.Columns.Add(Grids.Text(nameof(Row.LastSync), "Son Senkronizasyon", 130));
+        _grid.Columns.Add(Grids.Text(nameof(Row.Pending), "Bekleyen İş", 80));
+        _grid.Columns.Add(Grids.Text(nameof(Row.LastError), "Son Hata", 160));
         Controls.Add(_grid);
         Load += async (_, _) => await ReloadAsync();
     }
@@ -40,12 +41,13 @@ internal sealed class ControllerListControl : ScreenControl
         _grid.DataSource = rows.Select(row => new Row
         {
             Name = row.Name,
-            Model = row.Model,
             IpAddress = row.IpAddress,
-            Port = row.Port.ToString(),
-            SerialNumber = row.SerialNumber ?? "",
-            Status = Catalog.ActiveText(row.IsActive),
-            LastSeen = row.LastSeenAtUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? ""
+            Model = row.Model,
+            Connection = row.ConnectionText,
+            LastSeen = row.LastSeenAtUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "",
+            LastSync = row.LastSuccessfulSyncAtUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "",
+            Pending = row.PendingJobs.ToString(),
+            LastError = row.LastError ?? ""
         }).ToList();
         SetStatus($"{rows.Count} kayıt");
     }
@@ -53,11 +55,12 @@ internal sealed class ControllerListControl : ScreenControl
     private sealed class Row
     {
         public string Name { get; init; } = "";
-        public string Model { get; init; } = "";
         public string IpAddress { get; init; } = "";
-        public string Port { get; init; } = "";
-        public string SerialNumber { get; init; } = "";
-        public string Status { get; init; } = "";
+        public string Model { get; init; } = "";
+        public string Connection { get; init; } = "";
         public string LastSeen { get; init; } = "";
+        public string LastSync { get; init; } = "";
+        public string Pending { get; init; } = "";
+        public string LastError { get; init; } = "";
     }
 }
