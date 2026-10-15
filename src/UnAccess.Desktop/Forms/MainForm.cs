@@ -130,7 +130,8 @@ public sealed class MainForm : Form
             ("İşlem Geçmişi", "audit", Permissions.AuditView),
             ("Sistem Ayarları", "settings", Permissions.SettingsManage),
             ("Sistem Durumu", "health", Permissions.SystemView),
-            ("Yedekleme", "backup", Permissions.SystemView)
+            ("Yedekleme", "backup", Permissions.SystemView),
+            ("Hakkında", "about", Permissions.SystemView)
         ]);
         _menu.ExpandAll();
     }
@@ -216,6 +217,7 @@ public sealed class MainForm : Form
         "settings" => new SystemSettingsControl(_scopes, _loggerFactory.CreateLogger<SystemSettingsControl>()),
         "health" => new SystemStatusControl(_scopes, _loggerFactory.CreateLogger<SystemStatusControl>()),
         "backup" => new BackupControl(_scopes, _loggerFactory.CreateLogger<BackupControl>()),
+        "about" => new AboutControl(_scopes, _loggerFactory.CreateLogger<AboutControl>()),
         _ => throw new InvalidOperationException("Bilinmeyen ekran.")
     };
 

@@ -40,4 +40,6 @@ public static class FieldLengths
     public const int ServiceName = 64;
     public const int InstanceId = 64;
     public const int Version = 32;
+    public const int BackupFileName = 260;
+    public const int ErrorMessage = 2000;
 }

@@ -3,9 +3,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UnAccess.Core.Abstractions;
+using UnAccess.Core.Backup;
+using UnAccess.Core.Security;
 using UnAccess.Data;
+using UnAccess.Data.Infrastructure;
+using UnAccess.Data.Services;
 using UnAccess.Desktop.Forms;
-using UnAccess.Desktop.Logging;
 using UnAccess.Desktop.Passage;
 using UnAccess.Devices;
 using UnAccess.Simulator;
@@ -42,26 +45,51 @@ internal static class Program
             .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
             .AddJsonFile(appDataSettings, optional: true, reloadOnChange: false)
             .AddEnvironmentVariables()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["UnAccess:Environment"] = environment
+            })
             .Build();
 
         var minimumLevel = Enum.TryParse<LogLevel>(configuration["Logging:MinimumLevel"], true, out var parsed)
             ? parsed
             : LogLevel.Information;
+        var paths = new AppPathProvider();
+        var store = new FileConnectionConfigurationStore(paths, new DpapiSecretProtector());
+        var connectionString = configuration.GetConnectionString("UnAccess");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            var stored = store.Read();
+            if (stored.Success)
+                connectionString = stored.ConnectionString;
+        }
+
+        var production = string.Equals(environment, "Production", StringComparison.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(connectionString) && production)
+        {
+            using var wizard = new SetupWizardForm(
+                new ConnectionProbe(LoggerFactory.Create(builder => builder.AddProvider(new SanitizingConsoleLoggerProvider(minimumLevel))).CreateLogger<ConnectionProbe>()),
+                value => BuildProvider(configuration, environment, minimumLevel, paths, value),
+                store);
+            if (wizard.ShowDialog() != DialogResult.OK || string.IsNullOrWhiteSpace(wizard.ConnectionString))
+                return;
+            connectionString = wizard.ConnectionString;
+        }
 
         var services = new ServiceCollection();
-        services.AddSingleton<IConfiguration>(configuration);
+        services.AddSingleton<IConfiguration>(BuildConfiguration(configuration, environment, connectionString));
         services.AddLogging(builder =>
         {
             builder.ClearProviders();
             builder.SetMinimumLevel(minimumLevel);
-            builder.AddProvider(new FileLoggerProvider(minimumLevel));
+            builder.AddProvider(new SanitizingFileLoggerProvider(paths, minimumLevel));
+            builder.AddProvider(new SanitizingConsoleLoggerProvider(minimumLevel));
         });
 
-        var connectionString = configuration.GetConnectionString("UnAccess");
         var dataConfigured = !string.IsNullOrWhiteSpace(connectionString);
         if (dataConfigured)
         {
-            services.AddUnAccessData(configuration);
+            services.AddUnAccessData(BuildConfiguration(configuration, environment, connectionString));
             services.AddTransient<ISimulatedPassageService, SimulatorPassageDecorator>();
         }
 
@@ -70,15 +98,20 @@ internal static class Program
 
         using var provider = services.BuildServiceProvider();
         var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("UnAccess");
-        Application.ThreadException += (_, args) => Ui.UiErrors.Show(logger, null, args.Exception);
+        var version = typeof(BackupMessages).Assembly.GetName().Version?.ToString() ?? "";
+        Application.ThreadException += (_, args) =>
+        {
+            logger.LogError(args.Exception, "Beklenmeyen arayüz hatası. Sürüm {Version} Makine {Machine} Bağlam {Context}", version, Environment.MachineName, "Desktop");
+            Ui.UiErrors.Show(logger, null, args.Exception);
+        };
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {
             if (args.ExceptionObject is Exception exception)
-                logger.LogCritical(exception, "Yakalanmayan hata");
+                logger.LogCritical(exception, "Yakalanmayan hata. Sürüm {Version} Makine {Machine} Bağlam {Context}", version, Environment.MachineName, "Desktop");
         };
         TaskScheduler.UnobservedTaskException += (_, args) =>
         {
-            logger.LogError(args.Exception, "Gözlemlenmeyen görev hatası");
+            logger.LogError(args.Exception, "Gözlemlenmeyen görev hatası. Sürüm {Version} Makine {Machine} Bağlam {Context}", version, Environment.MachineName, "Desktop");
             args.SetObserved();
         };
 
@@ -135,5 +168,35 @@ internal static class Program
         }
 
         Application.Run(provider.GetRequiredService<MainForm>());
+    }
+
+    private static IConfiguration BuildConfiguration(IConfiguration configuration, string environment, string? connectionString)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["UnAccess:Environment"] = environment
+        };
+        if (!string.IsNullOrWhiteSpace(connectionString))
+            values["ConnectionStrings:UnAccess"] = connectionString;
+        return new ConfigurationBuilder()
+            .AddConfiguration(configuration)
+            .AddInMemoryCollection(values)
+            .Build();
+    }
+
+    private static ServiceProvider BuildProvider(IConfiguration configuration, string environment, LogLevel minimumLevel, IAppPathProvider paths, string connectionString)
+    {
+        var built = BuildConfiguration(configuration, environment, connectionString);
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(built);
+        services.AddLogging(builder =>
+        {
+            builder.ClearProviders();
+            builder.SetMinimumLevel(minimumLevel);
+            builder.AddProvider(new SanitizingFileLoggerProvider(paths, minimumLevel));
+            builder.AddProvider(new SanitizingConsoleLoggerProvider(minimumLevel));
+        });
+        services.AddUnAccessData(built);
+        return services.BuildServiceProvider();
     }
 }

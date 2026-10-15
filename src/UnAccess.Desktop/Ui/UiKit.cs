@@ -17,7 +17,7 @@ internal static class UiErrors
         logger.LogError(exception, "Beklenmeyen hata");
         MessageBox.Show(
             owner,
-            "İşlem tamamlanamadı. Teknik ayrıntı günlük dosyasına yazıldı.",
+            "Beklenmeyen bir hata oluştu. Ayrıntılar sistem günlüğüne kaydedildi.",
             "UnAccess",
             MessageBoxButtons.OK,
             MessageBoxIcon.Error);
