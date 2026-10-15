@@ -188,6 +188,21 @@ public class OperationsUnitTests
     }
 
     [Fact]
+    public void Managed_password_hash_matches_identity_v3()
+    {
+        var passwords = new IdentityPasswordHasher();
+        var password = "UnAccess.2026";
+        var fromIdentity = passwords.Hash(password);
+        var fromManaged = ManagedIdentityPassword.Hash(password);
+
+        Assert.StartsWith("AQAAAA", fromManaged, StringComparison.Ordinal);
+        Assert.True(ManagedIdentityPassword.Verify(fromIdentity, password));
+        Assert.True(passwords.Verify(fromManaged, password));
+        Assert.False(ManagedIdentityPassword.Verify(fromIdentity, "UnAccess.2027"));
+        Assert.False(passwords.Verify(fromManaged, "wrong-password"));
+    }
+
+    [Fact]
     public void Hospital_clock_accepts_iana_and_windows_timezone_ids()
     {
         var iana = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>

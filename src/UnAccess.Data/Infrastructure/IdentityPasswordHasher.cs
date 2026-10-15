@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Identity;
 using UnAccess.Core.Abstractions;
 
@@ -10,18 +11,35 @@ internal sealed class IdentityPasswordHasher : IPasswordHasher
 
     public IdentityPasswordHasher()
     {
-        _dummyHash = _hasher.HashPassword(PasswordSubject.Instance, Guid.NewGuid().ToString("N"));
+        _dummyHash = Hash(Guid.NewGuid().ToString("N"));
     }
 
-    public string Hash(string password) => _hasher.HashPassword(PasswordSubject.Instance, password);
+    public string Hash(string password)
+    {
+        try
+        {
+            return _hasher.HashPassword(PasswordSubject.Instance, password);
+        }
+        catch (CryptographicException)
+        {
+            return ManagedIdentityPassword.Hash(password);
+        }
+    }
 
     public bool Verify(string hash, string password)
     {
         if (string.IsNullOrEmpty(hash) || string.IsNullOrEmpty(password))
             return false;
 
-        var result = _hasher.VerifyHashedPassword(PasswordSubject.Instance, hash, password);
-        return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
+        try
+        {
+            var result = _hasher.VerifyHashedPassword(PasswordSubject.Instance, hash, password);
+            return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
+        }
+        catch (CryptographicException)
+        {
+            return ManagedIdentityPassword.Verify(hash, password);
+        }
     }
 
     public void Burn(string password) => Verify(_dummyHash, string.IsNullOrEmpty(password) ? " " : password);
