@@ -22,4 +22,11 @@ public static class FieldLengths
     public const int AuditDescription = 1000;
     public const int AuditValue = 4000;
     public const int ComputerName = 128;
+    public const int EventId = 64;
+    public const int EventType = 32;
+    public const int Decision = 32;
+    public const int EventSource = 32;
+    public const int Reason = 1000;
+    public const int RawData = 4000;
+    public const int TimeZoneId = 64;
 }

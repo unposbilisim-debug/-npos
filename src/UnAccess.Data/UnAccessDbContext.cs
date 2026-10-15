@@ -22,6 +22,14 @@ public sealed class UnAccessDbContext : DbContext
     public DbSet<Door> Doors => Set<Door>();
     public DbSet<Controller> Controllers => Set<Controller>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AccessGroup> AccessGroups => Set<AccessGroup>();
+    public DbSet<PersonnelAccessGroup> PersonnelAccessGroups => Set<PersonnelAccessGroup>();
+    public DbSet<TimeSchedule> TimeSchedules => Set<TimeSchedule>();
+    public DbSet<TimeScheduleDetail> TimeScheduleDetails => Set<TimeScheduleDetail>();
+    public DbSet<AccessGroupZone> AccessGroupZones => Set<AccessGroupZone>();
+    public DbSet<AccessGroupDoor> AccessGroupDoors => Set<AccessGroupDoor>();
+    public DbSet<PersonnelAccessOverride> PersonnelAccessOverrides => Set<PersonnelAccessOverride>();
+    public DbSet<AccessEvent> AccessEvents => Set<AccessEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

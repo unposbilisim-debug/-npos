@@ -35,7 +35,7 @@ internal sealed class PersonnelEditForm : Form
         _existing = existing;
         _scopes = scopes;
         _logger = logger;
-        FormChrome.Apply(this, existing == null ? "Yeni Personel" : "Personel", new Size(640, 520));
+        FormChrome.Apply(this, existing == null ? "Yeni Personel" : "Personel", new Size(780, 680));
 
         BindLookup(_department, departments, existing?.DepartmentId);
         BindLookup(_jobTitle, jobTitles, existing?.JobTitleId);
@@ -109,9 +109,25 @@ internal sealed class PersonnelEditForm : Form
             cardsPage.Controls.Add(cardBar);
         }
 
+        var accessPage = new TabPage("Yetkiler") { Padding = new Padding(4) };
+        if (existing == null)
+        {
+            accessPage.Controls.Add(new Label
+            {
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Text = "Personel kaydedildikten sonra yetkiler bu sekmede görünür."
+            });
+        }
+        else
+        {
+            accessPage.Controls.Add(new PersonnelAccessPanel(existing.Id, scopes, logger));
+        }
+
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(general);
         tabs.TabPages.Add(cardsPage);
+        tabs.TabPages.Add(accessPage);
 
         var buttons = FormChrome.Buttons(this, out var save, out _);
         save.Click += (_, _) => SaveModel();

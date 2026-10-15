@@ -22,6 +22,211 @@ namespace UnAccess.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("UnAccess.Core.Entities.AccessEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CardId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CardNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int?>("ControllerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<int>("DoorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EventId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PersonnelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RawData")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId");
+
+                    b.HasIndex("ControllerId");
+
+                    b.HasIndex("EventId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AccessEvents_EventId");
+
+                    b.HasIndex("OccurredAtUtc")
+                        .HasDatabaseName("IX_AccessEvents_OccurredAtUtc");
+
+                    b.HasIndex("CardNumber", "OccurredAtUtc")
+                        .HasDatabaseName("IX_AccessEvents_Card_OccurredAtUtc");
+
+                    b.HasIndex("DoorId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_AccessEvents_Door_OccurredAtUtc");
+
+                    b.HasIndex("PersonnelId", "OccurredAtUtc")
+                        .HasDatabaseName("IX_AccessEvents_Personnel_OccurredAtUtc");
+
+                    b.ToTable("AccessEvents", (string)null);
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.AccessGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AccessGroups_Code");
+
+                    b.ToTable("AccessGroups", (string)null);
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.AccessGroupDoor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DoorId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAllowed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("TimeScheduleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoorId")
+                        .HasDatabaseName("IX_AccessGroupDoors_DoorId");
+
+                    b.HasIndex("TimeScheduleId");
+
+                    b.HasIndex("AccessGroupId", "DoorId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AccessGroupDoors_Group_Door");
+
+                    b.ToTable("AccessGroupDoors", (string)null);
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.AccessGroupZone", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAllowed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("TimeScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ZoneId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeScheduleId");
+
+                    b.HasIndex("ZoneId")
+                        .HasDatabaseName("IX_AccessGroupZones_ZoneId");
+
+                    b.HasIndex("AccessGroupId", "ZoneId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AccessGroupZones_Group_Zone");
+
+                    b.ToTable("AccessGroupZones", (string)null);
+                });
+
             modelBuilder.Entity("UnAccess.Core.Entities.AuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -449,6 +654,182 @@ namespace UnAccess.Data.Migrations
                     b.ToTable("Personnel", (string)null);
                 });
 
+            modelBuilder.Entity("UnAccess.Core.Entities.PersonnelAccessGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PersonnelId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("ValidUntil")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccessGroupId");
+
+                    b.HasIndex("PersonnelId")
+                        .HasDatabaseName("IX_PersonnelAccessGroups_PersonnelId");
+
+                    b.HasIndex("PersonnelId", "AccessGroupId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_PersonnelAccessGroups_Person_Group");
+
+                    b.ToTable("PersonnelAccessGroups", (string)null);
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.PersonnelAccessOverride", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DoorId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAllowed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PersonnelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("TimeScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("ValidUntil")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("ZoneId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DoorId");
+
+                    b.HasIndex("TimeScheduleId");
+
+                    b.HasIndex("ZoneId");
+
+                    b.HasIndex("PersonnelId", "DoorId")
+                        .HasDatabaseName("IX_PersonnelAccessOverrides_Personnel_Door");
+
+                    b.HasIndex("PersonnelId", "ZoneId")
+                        .HasDatabaseName("IX_PersonnelAccessOverrides_Personnel_Zone");
+
+                    b.ToTable("PersonnelAccessOverrides", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_PersonnelAccessOverrides_Target", "([ZoneId] IS NOT NULL AND [DoorId] IS NULL) OR ([ZoneId] IS NULL AND [DoorId] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.TimeSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TimeSchedules_Code");
+
+                    b.ToTable("TimeSchedules", (string)null);
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.TimeScheduleDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("TimeScheduleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TimeScheduleId")
+                        .HasDatabaseName("IX_TimeScheduleDetails_TimeScheduleId");
+
+                    b.ToTable("TimeScheduleDetails", (string)null);
+                });
+
             modelBuilder.Entity("UnAccess.Core.Entities.Zone", b =>
                 {
                     b.Property<int>("Id")
@@ -483,6 +864,92 @@ namespace UnAccess.Data.Migrations
                         .HasDatabaseName("UX_Zones_Floor_Code");
 
                     b.ToTable("Zones", (string)null);
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.AccessEvent", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.Card", "Card")
+                        .WithMany()
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("UnAccess.Core.Entities.Controller", "Controller")
+                        .WithMany()
+                        .HasForeignKey("ControllerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("UnAccess.Core.Entities.Door", "Door")
+                        .WithMany()
+                        .HasForeignKey("DoorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.Personnel", "Personnel")
+                        .WithMany()
+                        .HasForeignKey("PersonnelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Card");
+
+                    b.Navigation("Controller");
+
+                    b.Navigation("Door");
+
+                    b.Navigation("Personnel");
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.AccessGroupDoor", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.AccessGroup", "AccessGroup")
+                        .WithMany()
+                        .HasForeignKey("AccessGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.Door", "Door")
+                        .WithMany()
+                        .HasForeignKey("DoorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.TimeSchedule", "TimeSchedule")
+                        .WithMany()
+                        .HasForeignKey("TimeScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AccessGroup");
+
+                    b.Navigation("Door");
+
+                    b.Navigation("TimeSchedule");
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.AccessGroupZone", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.AccessGroup", "AccessGroup")
+                        .WithMany()
+                        .HasForeignKey("AccessGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.TimeSchedule", "TimeSchedule")
+                        .WithMany()
+                        .HasForeignKey("TimeScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.Zone", "Zone")
+                        .WithMany()
+                        .HasForeignKey("ZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AccessGroup");
+
+                    b.Navigation("TimeSchedule");
+
+                    b.Navigation("Zone");
                 });
 
             modelBuilder.Entity("UnAccess.Core.Entities.Card", b =>
@@ -542,6 +1009,69 @@ namespace UnAccess.Data.Migrations
                     b.Navigation("Department");
 
                     b.Navigation("JobTitle");
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.PersonnelAccessGroup", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.AccessGroup", "AccessGroup")
+                        .WithMany()
+                        .HasForeignKey("AccessGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.Personnel", "Personnel")
+                        .WithMany()
+                        .HasForeignKey("PersonnelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AccessGroup");
+
+                    b.Navigation("Personnel");
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.PersonnelAccessOverride", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.Door", "Door")
+                        .WithMany()
+                        .HasForeignKey("DoorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("UnAccess.Core.Entities.Personnel", "Personnel")
+                        .WithMany()
+                        .HasForeignKey("PersonnelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.TimeSchedule", "TimeSchedule")
+                        .WithMany()
+                        .HasForeignKey("TimeScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("UnAccess.Core.Entities.Zone", "Zone")
+                        .WithMany()
+                        .HasForeignKey("ZoneId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Door");
+
+                    b.Navigation("Personnel");
+
+                    b.Navigation("TimeSchedule");
+
+                    b.Navigation("Zone");
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.TimeScheduleDetail", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.TimeSchedule", "TimeSchedule")
+                        .WithMany()
+                        .HasForeignKey("TimeScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TimeSchedule");
                 });
 
             modelBuilder.Entity("UnAccess.Core.Entities.Zone", b =>

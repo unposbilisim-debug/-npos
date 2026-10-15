@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using UnAccess.Core.Abstractions;
+using UnAccess.Core.Access;
 using UnAccess.Core.Exceptions;
 using UnAccess.Data.Infrastructure;
 using UnAccess.Data.Services;
@@ -27,7 +28,15 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<AuditWriter>();
+        services.AddSingleton<IHospitalClock, HospitalClock>();
+        services.AddSingleton<ITimeScheduleEvaluator, TimeScheduleEvaluator>();
         services.AddTransient<IPersonnelService, PersonnelService>();
+        services.AddTransient<IAccessDecisionService, AccessDecisionService>();
+        services.AddTransient<IAccessGroupService, AccessGroupService>();
+        services.AddTransient<ITimeScheduleService, TimeScheduleService>();
+        services.AddTransient<IPersonnelAuthorizationService, PersonnelAuthorizationService>();
+        services.AddTransient<IPassageRecorder, PassageRecorder>();
+        services.AddTransient<IAccessEventQueryService, AccessEventQueryService>();
         services.AddTransient<ICardService, CardService>();
         services.AddTransient<IHospitalStructureService, HospitalStructureService>();
         services.AddTransient<IControllerQueryService, ControllerQueryService>();

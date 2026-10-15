@@ -19,6 +19,24 @@ internal static class AuditSnapshots
     public static string Zone(Zone zone) =>
         $"KatId={zone.FloorId}; Kod={zone.Code}; Ad={zone.Name}; Kritik={zone.IsCritical}; Aktif={zone.IsActive}";
 
+    public static string AccessGroup(AccessGroup group) =>
+        $"Kod={group.Code}; Ad={group.Name}; Aciklama={group.Description}; Aktif={group.IsActive}";
+
+    public static string PersonnelAccessGroup(PersonnelAccessGroup membership) =>
+        $"PersonelId={membership.PersonnelId}; GrupId={membership.AccessGroupId}; Baslangic={membership.ValidFrom:yyyy-MM-dd}; Bitis={membership.ValidUntil:yyyy-MM-dd}; Aktif={membership.IsActive}";
+
+    public static string AccessGroupZone(AccessGroupZone rule) =>
+        $"GrupId={rule.AccessGroupId}; BolgeId={rule.ZoneId}; PlanId={rule.TimeScheduleId}; Izin={rule.IsAllowed}; Aktif={rule.IsActive}";
+
+    public static string AccessGroupDoor(AccessGroupDoor rule) =>
+        $"GrupId={rule.AccessGroupId}; KapiId={rule.DoorId}; PlanId={rule.TimeScheduleId}; Izin={rule.IsAllowed}; Aktif={rule.IsActive}";
+
+    public static string PersonnelAccessOverride(PersonnelAccessOverride rule) =>
+        $"PersonelId={rule.PersonnelId}; BolgeId={rule.ZoneId}; KapiId={rule.DoorId}; PlanId={rule.TimeScheduleId}; Izin={rule.IsAllowed}; Baslangic={rule.ValidFrom:yyyy-MM-dd}; Bitis={rule.ValidUntil:yyyy-MM-dd}; Gerekce={rule.Reason}; Aktif={rule.IsActive}";
+
+    public static string TimeSchedule(TimeSchedule schedule, IEnumerable<string> intervals) =>
+        $"Kod={schedule.Code}; Ad={schedule.Name}; Aciklama={schedule.Description}; Aktif={schedule.IsActive}; Aralıklar={string.Join("|", intervals)}";
+
     public static string Door(Door door) =>
         $"BolgeId={door.ZoneId}; Kod={door.Code}; Ad={door.Name}; KontrolorId={door.ControllerId}; Kanal={door.ChannelNumber}; Giris={door.EntryReaderName}; Cikis={door.ExitReaderName}; CikisOkuyucu={door.HasExitReader}; Kritik={door.IsCritical}; Aktif={door.IsActive}";
 }

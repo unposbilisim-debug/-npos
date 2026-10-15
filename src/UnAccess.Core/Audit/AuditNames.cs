@@ -17,4 +17,10 @@ public static class AuditEntities
     public const string Floor = "Floor";
     public const string Zone = "Zone";
     public const string Door = "Door";
+    public const string AccessGroup = "AccessGroup";
+    public const string PersonnelAccessGroup = "PersonnelAccessGroup";
+    public const string AccessGroupZone = "AccessGroupZone";
+    public const string AccessGroupDoor = "AccessGroupDoor";
+    public const string PersonnelAccessOverride = "PersonnelAccessOverride";
+    public const string TimeSchedule = "TimeSchedule";
 }

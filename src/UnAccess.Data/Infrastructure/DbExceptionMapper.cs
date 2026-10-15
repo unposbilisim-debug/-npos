@@ -16,6 +16,12 @@ internal static class DbExceptionMapper
             return new UnAccessException(UniqueMessage(sql.Message), exception);
         }
 
+        if (sql is { Number: 547 } && sql.Message.Contains("CK_PersonnelAccessOverrides_Target", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogError(exception, "Personel istisnası hedef kuralı ihlal edildi.");
+            return new UnAccessException("İstisna için bölge veya kapıdan yalnızca biri seçilmelidir.", exception);
+        }
+
         logger.LogError(exception, "Veritabanı işlemi başarısız.");
         return new UnAccessException("Kayıt veritabanına yazılamadı. Teknik ayrıntı günlük dosyasına yazıldı.", exception);
     }
@@ -53,6 +59,20 @@ internal static class DbExceptionMapper
             return "Bu bölge kodu aynı katta zaten kayıtlı.";
         if (sqlMessage.Contains("UX_Doors_Code", StringComparison.OrdinalIgnoreCase))
             return "Bu kapı kodu zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_AccessGroups_Code", StringComparison.OrdinalIgnoreCase))
+            return "Bu yetki grubu kodu zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_TimeSchedules_Code", StringComparison.OrdinalIgnoreCase))
+            return "Bu zaman planı kodu zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_PersonnelAccessGroups_Person_Group", StringComparison.OrdinalIgnoreCase))
+            return "Bu personel seçilen yetki grubuna zaten bağlı.";
+        if (sqlMessage.Contains("UX_AccessGroupZones_Group_Zone", StringComparison.OrdinalIgnoreCase))
+            return "Bu bölge kuralı grupta zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_AccessGroupDoors_Group_Door", StringComparison.OrdinalIgnoreCase))
+            return "Bu kapı kuralı grupta zaten kayıtlı.";
+        if (sqlMessage.Contains("UX_AccessEvents_EventId", StringComparison.OrdinalIgnoreCase))
+            return "Bu geçiş olay numarası zaten kayıtlı.";
+        if (sqlMessage.Contains("CK_PersonnelAccessOverrides_Target", StringComparison.OrdinalIgnoreCase))
+            return "İstisna için bölge veya kapıdan yalnızca biri seçilmelidir.";
 
         return "Bu kayıt benzersiz alanlarda mevcut bir kayıtla çakışıyor.";
     }

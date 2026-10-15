@@ -21,6 +21,7 @@ public static class DevelopmentSeeder
 
         await EnsurePersonnelAsync(db, departments, jobs, cancellationToken);
         await EnsureHospitalAsync(db, cancellationToken);
+        await EnsureAccessAsync(db, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -241,6 +242,104 @@ public static class DevelopmentSeeder
         });
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    private static async Task EnsureAccessAsync(UnAccessDbContext db, CancellationToken cancellationToken)
+    {
+        var schedule = await db.TimeSchedules.FirstOrDefaultAsync(item => item.Code == "7_24", cancellationToken);
+        if (schedule == null)
+        {
+            schedule = new TimeSchedule
+            {
+                Code = "7_24",
+                Name = "7/24",
+                Description = "Haftanın her günü, günün her saati",
+                IsActive = true
+            };
+            db.TimeSchedules.Add(schedule);
+            await db.SaveChangesAsync(cancellationToken);
+            foreach (DayOfWeek day in Enum.GetValues<DayOfWeek>())
+            {
+                db.TimeScheduleDetails.Add(new TimeScheduleDetail
+                {
+                    TimeScheduleId = schedule.Id,
+                    DayOfWeek = day,
+                    StartTime = new TimeOnly(0, 0),
+                    EndTime = new TimeOnly(0, 0),
+                    IsActive = true
+                });
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        foreach (var (code, name) in AccessGroups)
+            await EnsureAccessGroupAsync(db, code, name, cancellationToken);
+
+        await EnsureZoneGrantAsync(db, "CERRAH", "Ana Giriş", schedule.Id, cancellationToken);
+        await EnsureZoneGrantAsync(db, "CERRAH", "Ameliyathane Bölgesi", schedule.Id, cancellationToken);
+        await EnsureZoneGrantAsync(db, "CERRAH", "Yoğun Bakım", schedule.Id, cancellationToken);
+        await EnsureZoneGrantAsync(db, "ECZACI", "Ana Giriş", schedule.Id, cancellationToken);
+        var pharmacy = await db.Zones.AsNoTracking().FirstOrDefaultAsync(
+            zone => zone.Name == "Eczane" || zone.Name == "Eczane Bölgesi",
+            cancellationToken);
+        if (pharmacy != null)
+            await EnsureZoneGrantAsync(db, "ECZACI", pharmacy.Name, schedule.Id, cancellationToken);
+        await EnsureZoneGrantAsync(db, "TEKNIK", "Ana Giriş", schedule.Id, cancellationToken);
+    }
+
+    private static async Task EnsureAccessGroupAsync(
+        UnAccessDbContext db,
+        string code,
+        string name,
+        CancellationToken cancellationToken)
+    {
+        if (await db.AccessGroups.AnyAsync(item => item.Code == code, cancellationToken))
+            return;
+
+        db.AccessGroups.Add(new AccessGroup
+        {
+            Code = code,
+            Name = name,
+            IsActive = true
+        });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task EnsureZoneGrantAsync(
+        UnAccessDbContext db,
+        string groupCode,
+        string zoneName,
+        int scheduleId,
+        CancellationToken cancellationToken)
+    {
+        var group = await db.AccessGroups.FirstOrDefaultAsync(item => item.Code == groupCode, cancellationToken);
+        var zone = await db.Zones.FirstOrDefaultAsync(item => item.Name == zoneName, cancellationToken);
+        if (group == null || zone == null)
+            return;
+        if (await db.AccessGroupZones.AnyAsync(item => item.AccessGroupId == group.Id && item.ZoneId == zone.Id, cancellationToken))
+            return;
+
+        db.AccessGroupZones.Add(new AccessGroupZone
+        {
+            AccessGroupId = group.Id,
+            ZoneId = zone.Id,
+            TimeScheduleId = scheduleId,
+            IsAllowed = true,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static readonly (string Code, string Name)[] AccessGroups =
+    [
+        ("CERRAH", "Cerrah"),
+        ("HEMSIRE", "Hemşire"),
+        ("ECZACI", "Eczacı"),
+        ("TEKNIK", "Teknik"),
+        ("GUVENLIK", "Güvenlik"),
+        ("TEMIZLIK", "Temizlik")
+    ];
 
     private static readonly (string Code, string Name)[] Departments =
     [

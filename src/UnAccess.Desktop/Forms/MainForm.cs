@@ -75,7 +75,14 @@ public sealed class MainForm : Form
         devices.Nodes.Add(Node("Kontrolörler", "controllers"));
         _menu.Nodes.Add(devices);
 
-        _menu.Nodes.Add(Node("CANLI GEÇİŞ", "disabled"));
+        var access = Node("YETKİLER", null);
+        access.Nodes.Add(Node("Yetki Grupları", "access-groups"));
+        access.Nodes.Add(Node("Zaman Planları", "schedules"));
+        access.Nodes.Add(Node("Personel İstisnaları", "overrides"));
+        _menu.Nodes.Add(access);
+
+        _menu.Nodes.Add(Node("GEÇİŞ SİMÜLATÖRÜ", "simulator"));
+        _menu.Nodes.Add(Node("CANLI GEÇİŞ", "live"));
         _menu.Nodes.Add(Node("RAPORLAR", "disabled"));
         _menu.Nodes.Add(Node("SİSTEM", "disabled"));
         _menu.ExpandAll();
@@ -130,6 +137,11 @@ public sealed class MainForm : Form
         "zones" => new ZoneListControl(_scopes, _loggerFactory.CreateLogger<ZoneListControl>()),
         "doors" => new DoorListControl(_scopes, _loggerFactory.CreateLogger<DoorListControl>()),
         "controllers" => new ControllerListControl(_scopes, _loggerFactory.CreateLogger<ControllerListControl>()),
+        "access-groups" => new AccessGroupListControl(_scopes, _loggerFactory.CreateLogger<AccessGroupListControl>()),
+        "schedules" => new TimeScheduleListControl(_scopes, _loggerFactory.CreateLogger<TimeScheduleListControl>()),
+        "overrides" => new PersonnelOverrideListControl(_scopes, _loggerFactory.CreateLogger<PersonnelOverrideListControl>()),
+        "simulator" => new PassageSimulatorControl(_scopes, _loggerFactory.CreateLogger<PassageSimulatorControl>()),
+        "live" => new LiveAccessControl(_scopes, _loggerFactory.CreateLogger<LiveAccessControl>()),
         _ => throw new InvalidOperationException("Bilinmeyen ekran.")
     };
 

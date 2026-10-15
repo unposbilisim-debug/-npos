@@ -3,8 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using UnAccess.Data;
+using UnAccess.Core.Abstractions;
 using UnAccess.Desktop.Forms;
 using UnAccess.Desktop.Logging;
+using UnAccess.Desktop.Passage;
 using UnAccess.Devices;
 using UnAccess.Simulator;
 
@@ -58,7 +60,10 @@ internal static class Program
         var connectionString = configuration.GetConnectionString("UnAccess");
         var dataConfigured = !string.IsNullOrWhiteSpace(connectionString);
         if (dataConfigured)
+        {
             services.AddUnAccessData(configuration);
+            services.AddTransient<ISimulatedPassageService, SimulatorPassageDecorator>();
+        }
 
         services.AddSingleton<IAccessController, DahuaSimulatorController>();
         services.AddTransient<MainForm>();
