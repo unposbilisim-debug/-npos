@@ -1,13 +1,17 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using UnAccess.Core.Abstractions;
 using UnAccess.Core.Audit;
 using UnAccess.Core.Enums;
 using UnAccess.Core.Exceptions;
 using UnAccess.Core.Models;
 using UnAccess.Data;
+using UnAccess.Data.Infrastructure;
+using UnAccess.Data.Services;
 using UnAccess.Data.Seeding;
 
 namespace UnAccess.Tests;
@@ -251,6 +255,149 @@ public class PhaseOneDataTests
         Assert.Equal(9, (await Service<IPersonnelService>().GetDepartmentsAsync(CancellationToken.None)).Count);
     }
 
+    [SkippableFact]
+    public async Task Second_active_card_is_rejected_until_the_current_one_is_not_active()
+    {
+        Skip.IfNot(_database.Available, _database.SkipReason);
+        var personnel = Service<IPersonnelService>();
+        var cards = Service<ICardService>();
+        var person = await CreatePersonAsync(personnel, "A");
+
+        var first = await cards.CreateAsync(Card(person.Id, "A1"), CancellationToken.None);
+        var duplicate = await Assert.ThrowsAsync<UnAccessException>(() =>
+            cards.CreateAsync(Card(person.Id, "A2"), CancellationToken.None));
+        Assert.Equal("Bu personelin zaten aktif bir kartı var.", duplicate.UserMessage);
+
+        await cards.SetStatusAsync(first.Id, CardStatus.Lost, CancellationToken.None);
+        var second = await cards.CreateAsync(Card(person.Id, "A2"), CancellationToken.None);
+        var reactivate = await Assert.ThrowsAsync<UnAccessException>(() =>
+            cards.SetStatusAsync(first.Id, CardStatus.Active, CancellationToken.None));
+        Assert.Equal("Bu personelin zaten aktif bir kartı var.", reactivate.UserMessage);
+
+        await cards.SetStatusAsync(second.Id, CardStatus.Cancelled, CancellationToken.None);
+        var third = await cards.CreateAsync(Card(person.Id, "A3"), CancellationToken.None);
+
+        var detail = await personnel.GetAsync(person.Id, CancellationToken.None);
+        Assert.NotNull(detail);
+        Assert.Equal(3, detail.Cards.Count);
+        Assert.Equal(CardStatus.Lost, detail.Cards.Single(card => card.Id == first.Id).Status);
+        Assert.Equal(CardStatus.Cancelled, detail.Cards.Single(card => card.Id == second.Id).Status);
+        Assert.Equal(CardStatus.Active, detail.Cards.Single(card => card.Id == third.Id).Status);
+    }
+
+    [SkippableFact]
+    public async Task Deactivation_cancels_active_cards_and_writes_an_audit_for_each()
+    {
+        Skip.IfNot(_database.Available, _database.SkipReason);
+        var personnel = Service<IPersonnelService>();
+        var cards = Service<ICardService>();
+        var person = await CreatePersonAsync(personnel, "P");
+        var lost = await cards.CreateAsync(Card(person.Id, "P1"), CancellationToken.None);
+        await cards.SetStatusAsync(lost.Id, CardStatus.Lost, CancellationToken.None);
+        var active = await cards.CreateAsync(Card(person.Id, "P2"), CancellationToken.None);
+
+        var updated = await personnel.UpdateAsync(person.Id, Edit(person, isActive: false), CancellationToken.None);
+
+        Assert.False(updated.IsActive);
+        Assert.Equal(2, updated.Cards.Count);
+        Assert.Equal(CardStatus.Cancelled, updated.Cards.Single(card => card.Id == active.Id).Status);
+        Assert.Equal(CardStatus.Lost, updated.Cards.Single(card => card.Id == lost.Id).Status);
+
+        await using var db = await Factory().CreateDbContextAsync();
+        var storedCards = await db.Cards.Where(card => card.PersonnelId == person.Id).ToListAsync();
+        Assert.Equal(2, storedCards.Count);
+        Assert.Contains(storedCards, card => card.Id == active.Id && card.Status == CardStatus.Cancelled);
+        Assert.Contains(storedCards, card => card.Id == lost.Id && card.Status == CardStatus.Lost);
+
+        var personnelAudits = await db.AuditLogs
+            .Where(log => log.EntityType == AuditEntities.Personnel && log.EntityId == person.Id.ToString())
+            .ToListAsync();
+        Assert.Contains(personnelAudits, log => log.Action == AuditActions.Deactivated);
+
+        var cardAudits = await db.AuditLogs
+            .Where(log => log.EntityType == AuditEntities.Card && log.EntityId == active.Id.ToString())
+            .ToListAsync();
+        Assert.Contains(cardAudits, log =>
+            log.Action == AuditActions.StatusChanged &&
+            log.Description.Contains(active.CardNumber, StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            await db.AuditLogs.Where(log => log.EntityId == lost.Id.ToString()).Select(log => log.Description).ToListAsync(),
+            description => description.Contains("pasife alındığı için", StringComparison.Ordinal));
+    }
+
+    [SkippableFact]
+    public async Task Failed_deactivation_rolls_back_personnel_and_active_cards_together()
+    {
+        Skip.IfNot(_database.Available, _database.SkipReason);
+        var personnel = Service<IPersonnelService>();
+        var cards = Service<ICardService>();
+        var person = await CreatePersonAsync(personnel, "R");
+        var active = await cards.CreateAsync(Card(person.Id, "R1"), CancellationToken.None);
+
+        await using var probe = await Factory().CreateDbContextAsync();
+        var connectionString = probe.Database.GetConnectionString();
+        Assert.False(string.IsNullOrWhiteSpace(connectionString));
+
+        var options = new DbContextOptionsBuilder<UnAccessDbContext>()
+            .UseSqlServer(connectionString)
+            .AddInterceptors(new FailOnSecondSaveInterceptor())
+            .Options;
+        var service = new PersonnelService(
+            new FixedContextFactory(options),
+            new AuditWriter(),
+            NullLogger<PersonnelService>.Instance);
+
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            service.UpdateAsync(person.Id, Edit(person, isActive: false), CancellationToken.None));
+
+        await using var db = await Factory().CreateDbContextAsync();
+        var storedPerson = await db.Personnel.SingleAsync(item => item.Id == person.Id);
+        var storedCard = await db.Cards.SingleAsync(card => card.Id == active.Id);
+        Assert.True(storedPerson.IsActive);
+        Assert.Equal(CardStatus.Active, storedCard.Status);
+        Assert.DoesNotContain(
+            await db.AuditLogs.Where(log => log.EntityId == person.Id.ToString()).Select(log => log.Action).ToListAsync(),
+            action => action == AuditActions.Deactivated);
+        Assert.DoesNotContain(
+            await db.AuditLogs.Where(log => log.EntityId == active.Id.ToString()).Select(log => log.Description).ToListAsync(),
+            description => description.Contains("pasife alındığı için", StringComparison.Ordinal));
+    }
+
+    private async Task<PersonnelDetail> CreatePersonAsync(IPersonnelService personnel, string prefix)
+    {
+        var departments = await personnel.GetDepartmentsAsync(CancellationToken.None);
+        var jobs = await personnel.GetJobTitlesAsync(CancellationToken.None);
+        return await personnel.CreateAsync(new PersonnelEditModel
+        {
+            PersonnelNumber = prefix + Guid.NewGuid().ToString("N")[..8],
+            FirstName = "Kural",
+            LastName = "Test",
+            DepartmentId = departments.Single(item => item.Code == "GC").Id,
+            JobTitleId = jobs.Single(item => item.Code == "DOKTOR").Id,
+            IsActive = true
+        }, CancellationToken.None);
+    }
+
+    private static PersonnelEditModel Edit(PersonnelDetail person, bool isActive) => new()
+    {
+        PersonnelNumber = person.PersonnelNumber,
+        FirstName = person.FirstName,
+        LastName = person.LastName,
+        DepartmentId = person.DepartmentId,
+        JobTitleId = person.JobTitleId,
+        Phone = person.Phone,
+        Email = person.Email,
+        PhotoPath = person.PhotoPath,
+        IsActive = isActive
+    };
+
+    private static CardEditModel Card(int personnelId, string suffix) => new()
+    {
+        PersonnelId = personnelId,
+        CardNumber = suffix + Guid.NewGuid().ToString("N")[..10],
+        ValidFrom = new DateOnly(2026, 1, 1)
+    };
+
     private T Service<T>() where T : notnull
     {
         return _database.Provider!.GetRequiredService<T>();
@@ -259,5 +406,37 @@ public class PhaseOneDataTests
     private IDbContextFactory<UnAccessDbContext> Factory()
     {
         return _database.Provider!.GetRequiredService<IDbContextFactory<UnAccessDbContext>>();
+    }
+
+    private sealed class FixedContextFactory : IDbContextFactory<UnAccessDbContext>
+    {
+        private readonly DbContextOptions<UnAccessDbContext> _options;
+
+        public FixedContextFactory(DbContextOptions<UnAccessDbContext> options)
+        {
+            _options = options;
+        }
+
+        public UnAccessDbContext CreateDbContext() => new(_options);
+
+        public Task<UnAccessDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(CreateDbContext());
+    }
+
+    private sealed class FailOnSecondSaveInterceptor : SaveChangesInterceptor
+    {
+        private int _saves;
+
+        public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+            DbContextEventData eventData,
+            InterceptionResult<int> result,
+            CancellationToken cancellationToken = default)
+        {
+            _saves++;
+            if (_saves >= 2)
+                throw new InvalidOperationException("Denetim kaydı yazılamadı.");
+
+            return base.SavingChangesAsync(eventData, result, cancellationToken);
+        }
     }
 }

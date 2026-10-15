@@ -25,9 +25,17 @@ internal abstract class ServiceBase
         return await query(db, cancellationToken);
     }
 
-    protected async Task<T> SaveWithAuditAsync<T>(
+    protected Task<T> SaveWithAuditAsync<T>(
         Func<UnAccessDbContext, CancellationToken, Task<T>> mutate,
         Func<T, AuditEntry> auditFor,
+        CancellationToken cancellationToken)
+    {
+        return SaveWithAuditAsync(mutate, saved => new[] { auditFor(saved) }, cancellationToken);
+    }
+
+    protected async Task<T> SaveWithAuditAsync<T>(
+        Func<UnAccessDbContext, CancellationToken, Task<T>> mutate,
+        Func<T, IReadOnlyList<AuditEntry>> auditsFor,
         CancellationToken cancellationToken)
     {
         await using var db = await _factory.CreateDbContextAsync(cancellationToken);
@@ -36,7 +44,8 @@ internal abstract class ServiceBase
         {
             var result = await mutate(db, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
-            _audit.Add(db, auditFor(result));
+            foreach (var entry in auditsFor(result))
+                _audit.Add(db, entry);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return result;

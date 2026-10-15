@@ -75,6 +75,8 @@ internal sealed class CardService : ServiceBase, ICardService
             if (!person.p.IsActive)
                 throw new UnAccessException("Pasif personele kart verilemez.");
 
+            await EnsureSingleActiveCardAsync(db, person.p.Id, exceptCardId: null, ct);
+
             var taken = await db.Cards.AnyAsync(c => c.CardNumber == cardNumber, ct);
             if (taken)
                 throw new UnAccessException("Bu kart numarası zaten kayıtlı.");
@@ -134,6 +136,8 @@ internal sealed class CardService : ServiceBase, ICardService
                 throw new UnAccessException("Kart bulunamadı.");
             if (existing.Status == status)
                 throw new UnAccessException($"Kart zaten {status.ToTurkish()} durumunda.");
+            if (status == CardStatus.Active)
+                await EnsureSingleActiveCardAsync(db, existing.PersonnelId, existing.Id, ct);
 
             var person = await (
                 from p in db.Personnel.AsNoTracking()
@@ -205,6 +209,21 @@ internal sealed class CardService : ServiceBase, ICardService
             ValidFrom = card.ValidFrom,
             ValidUntil = card.ValidUntil
         };
+
+    private static async Task EnsureSingleActiveCardAsync(
+        UnAccessDbContext db,
+        int personnelId,
+        int? exceptCardId,
+        CancellationToken cancellationToken)
+    {
+        var hasActive = await db.Cards.AnyAsync(
+            card => card.PersonnelId == personnelId
+                && card.Status == CardStatus.Active
+                && (exceptCardId == null || card.Id != exceptCardId),
+            cancellationToken);
+        if (hasActive)
+            throw new UnAccessException("Bu personelin zaten aktif bir kartı var.");
+    }
 
     private static void EnsureDates(DateOnly validFrom, DateOnly? validUntil)
     {

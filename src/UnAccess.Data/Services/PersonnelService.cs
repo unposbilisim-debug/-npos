@@ -4,6 +4,7 @@ using UnAccess.Core.Abstractions;
 using UnAccess.Core.Audit;
 using UnAccess.Core.Common;
 using UnAccess.Core.Entities;
+using UnAccess.Core.Enums;
 using UnAccess.Core.Exceptions;
 using UnAccess.Core.Models;
 using UnAccess.Data.Infrastructure;
@@ -54,7 +55,7 @@ internal sealed class PersonnelService : ServiceBase, IPersonnelService
                     JobTitleName = x.jobTitle.Name,
                     IsActive = x.person.IsActive,
                     ActiveCardNumber = db.Cards
-                        .Where(card => card.PersonnelId == x.person.Id && card.Status == Core.Enums.CardStatus.Active)
+                        .Where(card => card.PersonnelId == x.person.Id && card.Status == CardStatus.Active)
                         .OrderByDescending(card => card.Id)
                         .Select(card => card.CardNumber)
                         .FirstOrDefault() ?? ""
@@ -130,6 +131,7 @@ internal sealed class PersonnelService : ServiceBase, IPersonnelService
         JobTitle? jobTitle = null;
         var oldSnapshot = "";
         var action = AuditActions.Updated;
+        var cardAudits = new List<AuditEntry>();
 
         var person = await SaveWithAuditAsync(async (db, ct) =>
         {
@@ -147,6 +149,9 @@ internal sealed class PersonnelService : ServiceBase, IPersonnelService
                 ? AuditActions.Updated
                 : draft.IsActive ? AuditActions.Activated : AuditActions.Deactivated;
 
+            if (existing.IsActive && !draft.IsActive)
+                cardAudits.AddRange(await CancelActiveCardsAsync(db, existing.Id, ct));
+
             existing.PersonnelNumber = draft.PersonnelNumber;
             existing.FirstName = draft.FirstName;
             existing.LastName = draft.LastName;
@@ -157,19 +162,27 @@ internal sealed class PersonnelService : ServiceBase, IPersonnelService
             existing.PhotoPath = draft.PhotoPath;
             existing.IsActive = draft.IsActive;
             return existing;
-        }, saved => new AuditEntry
+        }, saved =>
         {
-            Action = action,
-            EntityType = AuditEntities.Personnel,
-            EntityId = saved.Id.ToString(),
-            Description = action switch
+            var audits = new List<AuditEntry>
             {
-                AuditActions.Deactivated => $"Personel pasife alındı: {saved.PersonnelNumber} {saved.FirstName} {saved.LastName}",
-                AuditActions.Activated => $"Personel aktifleştirildi: {saved.PersonnelNumber} {saved.FirstName} {saved.LastName}",
-                _ => $"Personel güncellendi: {saved.PersonnelNumber} {saved.FirstName} {saved.LastName}"
-            },
-            OldValue = oldSnapshot,
-            NewValue = AuditSnapshots.Personnel(saved)
+                new()
+                {
+                    Action = action,
+                    EntityType = AuditEntities.Personnel,
+                    EntityId = saved.Id.ToString(),
+                    Description = action switch
+                    {
+                        AuditActions.Deactivated => $"Personel pasife alındı: {saved.PersonnelNumber} {saved.FirstName} {saved.LastName}",
+                        AuditActions.Activated => $"Personel aktifleştirildi: {saved.PersonnelNumber} {saved.FirstName} {saved.LastName}",
+                        _ => $"Personel güncellendi: {saved.PersonnelNumber} {saved.FirstName} {saved.LastName}"
+                    },
+                    OldValue = oldSnapshot,
+                    NewValue = AuditSnapshots.Personnel(saved)
+                }
+            };
+            audits.AddRange(cardAudits);
+            return audits;
         }, cancellationToken);
 
         var cards = await GetCardsAsync(person.Id, cancellationToken);
@@ -219,6 +232,34 @@ internal sealed class PersonnelService : ServiceBase, IPersonnelService
                 .ToListAsync(ct);
             return (IReadOnlyList<PersonnelCardItem>)rows;
         }, cancellationToken);
+    }
+
+    private static async Task<IReadOnlyList<AuditEntry>> CancelActiveCardsAsync(
+        UnAccessDbContext db,
+        int personnelId,
+        CancellationToken cancellationToken)
+    {
+        var activeCards = await db.Cards
+            .Where(card => card.PersonnelId == personnelId && card.Status == CardStatus.Active)
+            .ToListAsync(cancellationToken);
+
+        var audits = new List<AuditEntry>(activeCards.Count);
+        foreach (var card in activeCards)
+        {
+            var oldValue = AuditSnapshots.Card(card);
+            card.Status = CardStatus.Cancelled;
+            audits.Add(new AuditEntry
+            {
+                Action = AuditActions.StatusChanged,
+                EntityType = AuditEntities.Card,
+                EntityId = card.Id.ToString(),
+                Description = $"Personel pasife alındığı için kart iptal edildi: {card.CardNumber}",
+                OldValue = oldValue,
+                NewValue = AuditSnapshots.Card(card)
+            });
+        }
+
+        return audits;
     }
 
     private static Personnel Build(PersonnelEditModel model) => new()

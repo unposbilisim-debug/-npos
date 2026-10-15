@@ -207,7 +207,7 @@ internal sealed class PersonnelListControl : ScreenControl
         {
             var answer = MessageBox.Show(
                 this,
-                "Personel pasife alınacak. Kart geçmişi silinmez. Devam edilsin mi?",
+                "Personel pasife alınacak. Aktif kartları iptal edilir. Kart kayıtları silinmez. Devam edilsin mi?",
                 "UnAccess",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
