@@ -287,6 +287,65 @@ namespace UnAccess.Data.Migrations
                     b.ToTable("AuditLogs", (string)null);
                 });
 
+            modelBuilder.Entity("UnAccess.Core.Entities.BackupHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BackupDirectory")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("BackupType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<long?>("FileSizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("TriggeredBy")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<int?>("TriggeredByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TriggeredByUserId");
+
+                    b.HasIndex("BackupType", "Status", "CompletedAtUtc")
+                        .HasDatabaseName("IX_BackupHistory_Type_Status_Completed");
+
+                    b.ToTable("BackupHistory", (string)null);
+                });
+
             modelBuilder.Entity("UnAccess.Core.Entities.Building", b =>
                 {
                     b.Property<int>("Id")
@@ -866,6 +925,51 @@ namespace UnAccess.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("UnAccess.Core.Entities.RestoreHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("BackupFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("SafetyBackupFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<int?>("TriggeredByUserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StartedAtUtc")
+                        .HasDatabaseName("IX_RestoreHistory_StartedAtUtc");
+
+                    b.HasIndex("TriggeredByUserId");
+
+                    b.ToTable("RestoreHistory", (string)null);
+                });
+
             modelBuilder.Entity("UnAccess.Core.Entities.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -1278,6 +1382,14 @@ namespace UnAccess.Data.Migrations
                     b.Navigation("Zone");
                 });
 
+            modelBuilder.Entity("UnAccess.Core.Entities.BackupHistory", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("TriggeredByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("UnAccess.Core.Entities.Card", b =>
                 {
                     b.HasOne("UnAccess.Core.Entities.Personnel", "Personnel")
@@ -1398,6 +1510,14 @@ namespace UnAccess.Data.Migrations
                     b.Navigation("TimeSchedule");
 
                     b.Navigation("Zone");
+                });
+
+            modelBuilder.Entity("UnAccess.Core.Entities.RestoreHistory", b =>
+                {
+                    b.HasOne("UnAccess.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("TriggeredByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("UnAccess.Core.Entities.SecurityEvent", b =>

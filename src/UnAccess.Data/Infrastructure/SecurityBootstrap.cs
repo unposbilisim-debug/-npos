@@ -59,6 +59,10 @@ internal static class SecurityBootstrap
         (SettingKeys.DeviceSyncBatchSize, "50"),
         (SettingKeys.DeviceSyncStaleProcessingMinutes, "5"),
         (SettingKeys.ServiceHeartbeatIntervalSeconds, SecurityDefaults.HeartbeatIntervalSeconds.ToString()),
-        (SettingKeys.ServiceHeartbeatStaleSeconds, SecurityDefaults.HeartbeatStaleSeconds.ToString())
+        (SettingKeys.ServiceHeartbeatStaleSeconds, SecurityDefaults.HeartbeatStaleSeconds.ToString()),
+        (SettingKeys.BackupEnabled, "false"),
+        (SettingKeys.BackupDirectory, ""),
+        (SettingKeys.BackupTime, SecurityDefaults.BackupTime),
+        (SettingKeys.BackupRetentionDays, SecurityDefaults.BackupRetentionDays.ToString())
     ];
 }

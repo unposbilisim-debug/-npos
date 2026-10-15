@@ -9,6 +9,11 @@ public static class AuditActions
     public const string StatusChanged = "StatusChanged";
     public const string FullSyncRequested = "FullSyncRequested";
     public const string RetryRequested = "RetryRequested";
+    public const string ManualBackupRequested = "ManualBackupRequested";
+    public const string RestoreRequested = "RestoreRequested";
+    public const string RestoreCompleted = "RestoreCompleted";
+    public const string RestoreFailed = "RestoreFailed";
+    public const string BackupSettingsChanged = "BackupSettingsChanged";
 }
 
 public static class AuditEntities
@@ -28,4 +33,6 @@ public static class AuditEntities
     public const string DeviceSync = "DeviceSync";
     public const string User = "User";
     public const string SystemSetting = "SystemSetting";
+    public const string Backup = "Backup";
+    public const string Restore = "Restore";
 }

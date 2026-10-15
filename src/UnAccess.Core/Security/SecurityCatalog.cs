@@ -28,12 +28,13 @@ public static class Permissions
     public const string AuditView = "audit.view";
     public const string SettingsManage = "settings.manage";
     public const string SystemView = "system.view";
+    public const string BackupManage = "backup.manage";
 
     public static readonly string[] All =
     [
         PersonnelView, PersonnelManage, CardsView, CardsManage, AccessView, AccessManage,
         HospitalView, HospitalManage, DevicesView, DevicesOperate, LiveView, PassageSimulate,
-        ReportsView, UsersManage, AuditView, SettingsManage, SystemView
+        ReportsView, UsersManage, AuditView, SettingsManage, SystemView, BackupManage
     ];
 
     public static IReadOnlySet<string> ForRoles(IEnumerable<string> roles)
@@ -89,12 +90,16 @@ public static class SettingKeys
     public const string DeviceSyncStaleProcessingMinutes = "DeviceSyncStaleProcessingMinutes";
     public const string ServiceHeartbeatIntervalSeconds = "ServiceHeartbeatIntervalSeconds";
     public const string ServiceHeartbeatStaleSeconds = "ServiceHeartbeatStaleSeconds";
+    public const string BackupEnabled = "BackupEnabled";
+    public const string BackupDirectory = "BackupDirectory";
+    public const string BackupTime = "BackupTime";
+    public const string BackupRetentionDays = "BackupRetentionDays";
 
     public static readonly string[] Editable =
     [
         HospitalName, TimeZone, LoginMaxFailedAttempts, LoginLockoutMinutes, PasswordMinLength,
         DeviceSyncBatchSize, DeviceSyncStaleProcessingMinutes, ServiceHeartbeatIntervalSeconds,
-        ServiceHeartbeatStaleSeconds
+        ServiceHeartbeatStaleSeconds, BackupEnabled, BackupDirectory, BackupTime, BackupRetentionDays
     ];
 }
 
@@ -107,6 +112,8 @@ public static class SecurityDefaults
     public const int HeartbeatStaleSeconds = 90;
     public const string HospitalName = "Hastane";
     public const string TimeZone = "Europe/Istanbul";
+    public const int BackupRetentionDays = 30;
+    public const string BackupTime = "02:00";
 }
 
 public static class ServiceNames

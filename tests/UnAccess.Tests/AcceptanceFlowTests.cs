@@ -204,7 +204,7 @@ public sealed class AcceptanceFlowTests : IDisposable
             "personnel", "cards", "access-groups", "schedules", "overrides",
             "buildings", "floors", "zones", "doors", "controllers", "sync",
             "simulator", "live", "report-passages", "report-denied", "report-personnel", "report-doors",
-            "users", "audit", "settings", "health", "backup"
+            "users", "audit", "settings", "health", "backup", "about"
         })
         {
             Assert.Contains($"\"{key}\" =>", source, StringComparison.Ordinal);

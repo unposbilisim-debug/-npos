@@ -14,6 +14,13 @@ internal sealed class SystemStatusControl : ScreenControl
     private readonly Label _failed = Line();
     private readonly Label _dead = Line();
     private readonly Label _lastEvent = Line();
+    private readonly Label _migration = Line();
+    private readonly Label _model = Line();
+    private readonly Label _backup = Line();
+    private readonly Label _backupSuccess = Line();
+    private readonly Label _backupFailure = Line();
+    private readonly Label _backupFolder = Line();
+    private readonly Label _disk = Line();
 
     public SystemStatusControl(IServiceScopeFactory scopes, ILogger<SystemStatusControl> logger)
         : base(scopes, logger)
@@ -28,6 +35,13 @@ internal sealed class SystemStatusControl : ScreenControl
         Add(table, 4, "Başarısız iş", _failed);
         Add(table, 5, "Teslim edilemeyen", _dead);
         Add(table, 6, "Son geçiş kaydı", _lastEvent);
+        Add(table, 7, "Migration", _migration);
+        Add(table, 8, "Model", _model);
+        Add(table, 9, "Yedekleme", _backup);
+        Add(table, 10, "Son başarılı yedek", _backupSuccess);
+        Add(table, 11, "Son başarısız yedek", _backupFailure);
+        Add(table, 12, "Yedek klasörü", _backupFolder);
+        Add(table, 13, "Disk boş alanı", _disk);
         var refresh = new Button { Text = "Yenile", Width = 96, Height = 28, Margin = new Padding(8, 8, 0, 0) };
         refresh.Click += async (_, _) => await ReloadAsync();
         var bar = new FlowLayoutPanel { Dock = DockStyle.Top, Height = 44 };
@@ -55,6 +69,15 @@ internal sealed class SystemStatusControl : ScreenControl
             _lastEvent.Text = health.LastAccessEventUtc is DateTime occurred
                 ? clock.ToHospitalLocal(DateTime.SpecifyKind(occurred, DateTimeKind.Utc)).ToString("dd.MM.yyyy HH:mm:ss")
                 : "—";
+            _migration.Text = health.MigrationText;
+            _model.Text = health.ModelText;
+            _backup.Text = health.BackupStatusText;
+            _backupSuccess.Text = Stamp(clock, health.LastSuccessfulBackupUtc);
+            _backupFailure.Text = Stamp(clock, health.LastFailedBackupUtc);
+            _backupFolder.Text = string.IsNullOrWhiteSpace(health.BackupDirectory)
+                ? health.BackupFolderText
+                : health.BackupDirectory + " — " + health.BackupFolderText;
+            _disk.Text = health.DiskSpaceText;
         });
         if (ok)
             SetStatus("Sistem durumu");
@@ -66,6 +89,11 @@ internal sealed class SystemStatusControl : ScreenControl
         table.Controls.Add(new Label { Text = caption, AutoSize = true, Margin = new Padding(0, 6, 8, 0) }, 0, row);
         table.Controls.Add(value, 1, row);
     }
+
+    private static string Stamp(IHospitalClock clock, DateTime? utc) =>
+        utc is DateTime value
+            ? clock.ToHospitalLocal(DateTime.SpecifyKind(value, DateTimeKind.Utc)).ToString("dd.MM.yyyy HH:mm:ss")
+            : "—";
 
     private static Label Line() => new() { AutoSize = true, Margin = new Padding(0, 6, 0, 0), Text = "—" };
 }

@@ -37,6 +37,8 @@ public sealed class UnAccessDbContext : DbContext
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
     public DbSet<SecurityEvent> SecurityEvents => Set<SecurityEvent>();
     public DbSet<ServiceHeartbeat> ServiceHeartbeats => Set<ServiceHeartbeat>();
+    public DbSet<BackupHistory> BackupHistories => Set<BackupHistory>();
+    public DbSet<RestoreHistory> RestoreHistories => Set<RestoreHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

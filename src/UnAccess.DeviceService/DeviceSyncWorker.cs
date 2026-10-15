@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using UnAccess.Core.Abstractions;
+using UnAccess.Core.Backup;
 using UnAccess.Core.Models;
 using UnAccess.Core.Security;
 using UnAccess.Core.Sync;
@@ -17,6 +18,7 @@ public sealed class DeviceSyncWorker : BackgroundService
     private readonly ILogger<DeviceSyncWorker> _logger;
     private readonly IRuntimeSettings? _runtime;
     private readonly IServiceMonitor? _monitor;
+    private readonly IMaintenanceGate? _maintenance;
     private readonly string _instanceId = Guid.NewGuid().ToString("N");
     private readonly DateTime _startedAtUtc = DateTime.UtcNow;
     private DateTime _lastBeatUtc = DateTime.MinValue;
@@ -28,7 +30,8 @@ public sealed class DeviceSyncWorker : BackgroundService
         DeviceSyncOptions options,
         ILogger<DeviceSyncWorker> logger,
         IRuntimeSettings? runtime = null,
-        IServiceMonitor? monitor = null)
+        IServiceMonitor? monitor = null,
+        IMaintenanceGate? maintenance = null)
     {
         _processor = processor;
         _clients = clients;
@@ -37,6 +40,7 @@ public sealed class DeviceSyncWorker : BackgroundService
         _logger = logger;
         _runtime = runtime;
         _monitor = monitor;
+        _maintenance = maintenance;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -64,6 +68,28 @@ public sealed class DeviceSyncWorker : BackgroundService
     {
         var now = _clock.UtcNow;
         await BeatAsync(cancellationToken);
+        if (_maintenance != null)
+        {
+            var lease = await _maintenance.TryEnterSharedAsync(cancellationToken);
+            if (lease == null)
+            {
+                _logger.LogInformation(BackupMessages.MaintenanceSync);
+                return;
+            }
+
+            await using (lease)
+            {
+                await ProcessJobsAsync(now, cancellationToken);
+            }
+
+            return;
+        }
+
+        await ProcessJobsAsync(now, cancellationToken);
+    }
+
+    private async Task ProcessJobsAsync(DateTime now, CancellationToken cancellationToken)
+    {
         await _processor.RecoverStaleAsync(now, cancellationToken);
         var batch = _runtime == null ? _options.BatchSize : await _runtime.DeviceSyncBatchSizeAsync(cancellationToken);
         var jobs = await _processor.ClaimAsync(batch, now, cancellationToken);
@@ -88,7 +114,7 @@ public sealed class DeviceSyncWorker : BackgroundService
             ServiceName = ServiceNames.DeviceSync,
             InstanceId = _instanceId,
             StartedAtUtc = _startedAtUtc,
-            Version = typeof(DeviceSyncWorker).Assembly.GetName().Version?.ToString() ?? "1.0.0"
+            Version = typeof(DeviceSyncWorker).Assembly.GetName().Version?.ToString() ?? ""
         }, cancellationToken);
         _lastBeatUtc = now;
     }

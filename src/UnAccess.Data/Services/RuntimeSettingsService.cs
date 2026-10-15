@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UnAccess.Core.Abstractions;
 using UnAccess.Core.Audit;
+using UnAccess.Core.Backup;
 using UnAccess.Core.Common;
 using UnAccess.Core.Exceptions;
 using UnAccess.Core.Models;
@@ -80,6 +81,24 @@ internal sealed class RuntimeSettingsService : IRuntimeSettings, ISystemSettingS
         return string.IsNullOrWhiteSpace(value) ? SecurityDefaults.TimeZone : value.Trim();
     }
 
+    public async Task<bool> BackupEnabledAsync(CancellationToken cancellationToken)
+    {
+        var value = await ReadAsync(SettingKeys.BackupEnabled, cancellationToken);
+        return bool.TryParse(value, out var enabled) && enabled;
+    }
+
+    public async Task<string> BackupDirectoryAsync(CancellationToken cancellationToken) =>
+        (await ReadAsync(SettingKeys.BackupDirectory, cancellationToken) ?? "").Trim();
+
+    public async Task<TimeOnly> BackupTimeAsync(CancellationToken cancellationToken)
+    {
+        var value = await ReadAsync(SettingKeys.BackupTime, cancellationToken);
+        return TimeOnly.TryParse(value, out var time) ? time : TimeOnly.Parse(SecurityDefaults.BackupTime);
+    }
+
+    public Task<int> BackupRetentionDaysAsync(CancellationToken cancellationToken) =>
+        ReadIntAsync(SettingKeys.BackupRetentionDays, SecurityDefaults.BackupRetentionDays, 1, 3650, cancellationToken);
+
     public async Task<IReadOnlyList<SystemSettingItem>> ListAsync(CancellationToken cancellationToken)
     {
         _guard.Demand(Permissions.SettingsManage);
@@ -125,12 +144,13 @@ internal sealed class RuntimeSettingsService : IRuntimeSettings, ISystemSettingS
             if (item.Key == SettingKeys.TimeZone)
                 _hospitalClock.ApplyTimeZone(value);
 
+            var backupSetting = item.Key is SettingKeys.BackupEnabled or SettingKeys.BackupDirectory or SettingKeys.BackupTime or SettingKeys.BackupRetentionDays;
             _audit.Add(db, new AuditEntry
             {
-                Action = AuditActions.Updated,
+                Action = backupSetting ? AuditActions.BackupSettingsChanged : AuditActions.Updated,
                 EntityType = AuditEntities.SystemSetting,
                 EntityId = item.Key,
-                Description = $"Sistem ayarı güncellendi: {item.Key}",
+                Description = backupSetting ? $"Yedekleme ayarı güncellendi: {item.Key}" : $"Sistem ayarı güncellendi: {item.Key}",
                 OldValue = previous,
                 NewValue = value
             });
@@ -156,6 +176,8 @@ internal sealed class RuntimeSettingsService : IRuntimeSettings, ISystemSettingS
     private static string Validate(string key, string? value)
     {
         var text = (value ?? "").Trim();
+        if (key == SettingKeys.BackupDirectory)
+            return text.Length == 0 ? "" : BackupFiles.RequireDirectory(text);
         if (text.Length == 0 || text.Length > FieldLengths.SettingValue || text.Any(char.IsControl))
             throw new UnAccessException("Ayar değeri geçersiz.");
 
@@ -187,6 +209,16 @@ internal sealed class RuntimeSettingsService : IRuntimeSettings, ISystemSettingS
                 return RequireInt(text, 5, 300);
             case SettingKeys.ServiceHeartbeatStaleSeconds:
                 return RequireInt(text, 15, 3600);
+            case SettingKeys.BackupEnabled:
+                if (!bool.TryParse(text, out var enabled))
+                    throw new UnAccessException("Yedekleme açık veya kapalı olmalıdır.");
+                return enabled ? "true" : "false";
+            case SettingKeys.BackupTime:
+                if (!TimeOnly.TryParse(text, out var time))
+                    throw new UnAccessException("Yedekleme saati geçersiz.");
+                return time.ToString("HH:mm");
+            case SettingKeys.BackupRetentionDays:
+                return RequireInt(text, 1, 3650);
             default:
                 throw new UnAccessException("Bu ayar değiştirilemez.");
         }

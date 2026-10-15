@@ -58,6 +58,10 @@ public interface IRuntimeSettings
     Task<TimeSpan> HeartbeatStaleAsync(CancellationToken cancellationToken);
     Task<string> HospitalNameAsync(CancellationToken cancellationToken);
     Task<string> TimeZoneIdAsync(CancellationToken cancellationToken);
+    Task<bool> BackupEnabledAsync(CancellationToken cancellationToken);
+    Task<string> BackupDirectoryAsync(CancellationToken cancellationToken);
+    Task<TimeOnly> BackupTimeAsync(CancellationToken cancellationToken);
+    Task<int> BackupRetentionDaysAsync(CancellationToken cancellationToken);
 }
 
 public interface ISystemSettingService

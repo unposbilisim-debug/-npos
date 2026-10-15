@@ -79,6 +79,17 @@ public sealed class SystemHealthReport
     public int SyncFailed { get; init; }
     public int SyncDeadLetter { get; init; }
     public DateTime? LastAccessEventUtc { get; init; }
+    public string MigrationText { get; init; } = "Bilinmiyor";
+    public string ModelText { get; init; } = "Bilinmiyor";
+    public string BackupStatusText { get; init; } = "Bilinmiyor";
+    public DateTime? LastSuccessfulBackupUtc { get; init; }
+    public DateTime? LastFailedBackupUtc { get; init; }
+    public string BackupDirectory { get; init; } = "";
+    public string BackupFolderText { get; init; } = "Bilinmiyor";
+    public string DiskSpaceText { get; init; } = "Bilinmiyor";
+    public bool BackupEnabled { get; init; }
+    public string BackupTimeText { get; init; } = "";
+    public int BackupRetentionDays { get; init; }
 }
 
 public sealed class ReportPage<T>
